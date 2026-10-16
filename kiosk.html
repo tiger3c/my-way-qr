@@ -14,6 +14,8 @@
     <span class="sub small">일반 키오스크 화면(시연용)</span>
   </div>
   <button id="myway" class="myway" type="button">내 방식으로 주문 — 휴대폰으로 QR 찍기</button>
+  <button id="listen" class="block ghost" type="button">소리로 안내 듣기</button>
+  <p class="sub small">QR을 찾기 어려우면 「소리로 안내 듣기」를 누르세요. 키오스크 번호 네 자리를 읽어 드려요. (실제 기기에서는 음성 안내 버튼·이어폰 잭·점자 안내로 시작하도록 할 계획 — 이 시제품에는 없음)</p>
   <div id="arrived" class="card notice" hidden aria-live="polite"></div>
   <div class="tabs" id="tabs"></div>
   <div class="grid" id="grid"></div>
@@ -25,12 +27,13 @@
     <div class="qrbox" id="qr"></div>
     <p>키오스크 번호 <b id="kcode" style="font-size:1.6em; letter-spacing:4px"></b></p>
     <p class="sub small">QR을 못 찍으면 「내 방식 정하기」 화면에서 이 번호를 넣으세요. 휴대폰에 저장된 설정대로 주문 화면이 열립니다.</p>
+    <button id="readnum" class="block ghost" type="button">번호 읽어 주기</button>
     <a id="qrlink" class="small" href="#" target="_blank" rel="noopener">이 기기에서 열어 보기</a>
     <button id="close" class="block" type="button">닫기</button>
   </div>
 </div>
 <script type="module">
-import { loadStore, won, channel, el } from "./js/common.js";
+import { loadStore, won, channel, el, speak } from "./js/common.js";
 const store = await loadStore();
 document.getElementById("store").textContent = store.menu.store;
 const cats = [...new Set(store.menu.items.map((i) => i.category))];
@@ -55,15 +58,25 @@ document.getElementById("myway").onclick = () => {
   modal.classList.add("open"); document.getElementById("close").focus();
 };
 document.getElementById("close").onclick = () => modal.classList.remove("open");
+// v0.3(1차 모의 심사 A): 시각장애 사용자를 위한 소리 안내 — 키오스크 번호를 한 자리씩 읽어 줌(브라우저 내장 음성, 기기에 한국어 음성이 없으면 소리가 나지 않을 수 있음)
+const digits = () => k.split("").join(", ");
+const guide = () => `내 방식으로 주문하려면, 휴대폰의 내 방식 큐알 화면에서 키오스크 번호 ${digits()}를 넣으세요. 다시 듣기는 같은 단추를 누르세요.`;
+document.getElementById("listen").onclick = () => { if (!speak(guide(), true)) alert(`키오스크 번호: ${k}`); };
+document.getElementById("readnum").onclick = () => { if (!speak(`키오스크 번호, ${digits()}`, true)) alert(`키오스크 번호: ${k}`); };
 if (new URLSearchParams(location.search).get("open") === "qr") document.getElementById("myway").click();
 // 같은 기기에서 온 주문 알림(한 기기 시연). 두 기기 사이 전달은 서버가 필요해 시제품에서는 하지 않음
 channel().addEventListener("message", (ev) => {
   const m = ev.data || {};
-  if (m.type !== "order") return;
-  modal.classList.remove("open");
   const box = document.getElementById("arrived");
+  if (m.type === "staff") { // v0.3(1차 모의 심사 B·E): 직원 호출도 키오스크에 표시(한 기기 시연 안에서만)
+    box.hidden = false;
+    box.replaceChildren(el("b", {}, "직원 호출 — 내 방식 화면에서 도움을 요청했어요"), el("div", { class: "sub" }, "시연: 실제 호출은 되지 않아요"));
+    return;
+  }
+  if (m.type !== "order" || !Array.isArray(m.lines)) return;
+  modal.classList.remove("open");
   box.hidden = false;
-  box.replaceChildren(el("b", {}, `내 방식 주문이 도착했어요 — 주문 번호 ${m.no}`), el("div", {}, m.lines.join(" · ")), el("div", { class: "price" }, `합계 ${won(m.total)}`));
+  box.replaceChildren(el("b", {}, `내 방식 주문이 도착했어요 — 주문 번호 ${m.no}`), el("div", {}, m.lines.join(" · ")), el("div", { class: "price" }, `합계 ${won(Number(m.total) || 0)}`));
 });
 </script>
 </body>

@@ -1,4 +1,4 @@
-// 쉬운 말 변환 결과 규칙 검증 — 1일차 시험(2026-10-17) Python 규칙(run_test.py·run_test2.py·run_test3.py·recheck3.py·rules_v02.py)을 그대로 옮김.
+// 쉬운 말 변환 결과 규칙 검증 — 1일차 시험(2026-10-17) Python 규칙(run_test.py·run_test2.py·run_test3.py·recheck3.py·rules_v02.py·rules_v03.py)을 그대로 옮김.
 // 걸리면 재생성 1회 → 그래도 걸리면 원문 유지(틀린 쉬운 말이 화면에 나가지 않게 하는 안전 기본값)
 const CONCEPTS = {
   "우유": /우유|밀크(?!티)|밀크티/, "귀리": /오트|귀리/, "초콜릿": /초콜릿|초코|코코아/, "바닐라": /바닐라/,
@@ -81,6 +81,42 @@ export function checkEasy(it, out) {
     if (!new RegExp(noun + "[가-힣]* ?(이 |가 )?없").test(text)) flags.push(`빠진 부정 정보 '${m[1]} 없음'`);
   }
   if (GLUE.test(text)) flags.push("사전 말이 명사 뒤에 붙음");
+  flags.push(...claimsV03(it, out));
+  return flags;
+}
+
+// v0.3(2026-10-17, Python rules_v03.claims_v03와 같음) — 1차 모의 심사 적대 시험 반영:
+// 원문에 없는 식이·건강·가격 '주장', 원문에 없는 재료 부정('~가 들어가지 않은'), 빠진 카페인 정보면 걸림
+export const CLAIMS = [
+  ["채식·비건", /채식|비건|베지/, /채식|비건|베지/],
+  ["글루텐", /글루텐/, /글루텐/],
+  ["설탕 없음", /무설탕|설탕(이|을|은)? ?(없|안 |빼|넣지 않|0)|당 ?0|제로 ?슈거/, /무설탕|설탕(이|을|은)? ?(없|안 |빼|넣지 않)|제로/],
+  ["임산부·임신", /임산부|임신/, /임산부|임신/],
+  ["아이·어린이 대상", /어린이|아이(들)?(도|가|이)? ?(먹|마시|즐기)|유아/, /어린이|유아|아이/],
+  ["알레르기 없음", /알레르기(가|는|도)? ?(없|걱정|안심)|알러지(가|는)? ?(없|걱정)/, /알레르기(가|는)? ?없/],
+  ["칼로리·다이어트", /칼로리|다이어트|살(이|을)? ?(안|빼|덜)/, /칼로리|다이어트/],
+  ["건강·효능", /건강|몸에 좋|[가-힣]+에 좋(은|아)|효능|면역|감기|소화(가|를|에) ?(잘|도움)|피로/, /건강|효능|면역|감기/],
+  ["숙면", /숙면|잠(이|을|에)? ?(잘|와|들)/, /숙면|잠/],
+  ["유기농·천연·무첨가", /유기농|천연|무첨가|첨가물(이|을)? ?없/, /유기농|천연|무첨가/],
+  ["가격 주장", /무료|공짜|할인|덤|서비스로|값(이|을)? ?(없|안 받)/, /무료|할인/],
+  ["카페인 없음", /무카페인|카페인(이|은|도)? ?(없|0|전혀)|카페인 프리|카페인 걱정/, /카페인(이|은)? ?없|무카페인/],
+  ["락토·할랄·저염", /락토|할랄|코셔|저염|무염|저지방|무지방/, /락토|할랄|코셔|저염|무염|저지방|무지방/],
+];
+const NEG_INGR = /([가-힣]{1,6})(가|이|은|는|을|를)? ?(들어가지 않|넣지 않|없는|없이|안 들어간|빠진)/g;
+const CAFFEINE_SRC = /카페인을 [\d%이상 ]*줄인|카페인(이|은)? ?없/;
+const CAFFEINE_OUT = /카페인을 [가-힣 ]*줄|카페인(이|은)? ?(없|적|낮)/;
+export function claimsV03(it, out) {
+  const flags = [];
+  const desc = String(out.easy_desc || "");
+  const opts = Array.isArray(out.options) ? out.options.map(String) : [];
+  const text = desc + " " + opts.join(" ");
+  const src = sourceText(it);
+  for (const [name, po, ps] of CLAIMS) if (po.test(text) && !ps.test(src)) flags.push(`주장어 '${name}'`);
+  for (const m of text.matchAll(NEG_INGR)) {
+    const noun = m[1].replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (!new RegExp(noun + "[가-힣]* ?(없|빼|들어가지 않|넣지 않)").test(src)) flags.push(`재료 부정 지어냄 '${m[1]}'`);
+  }
+  if (CAFFEINE_SRC.test(src) && !CAFFEINE_OUT.test(text)) flags.push("빠진 정보 '카페인'");
   return flags;
 }
 

@@ -31,7 +31,7 @@
     <button id="tryBtn" type="button">규칙 검사</button>
     <div id="tryOut" class="live" aria-live="polite"></div>
   </div>
-  <p class="foot">모델: Qwen2.5-1.5B-Instruct(Apache-2.0) · 실행: WebLLM 0.2.86(Apache-2.0, WebGPU) · 규칙: 숫자 금지, 원문에 없는 재료·사실, 빠진 주재료, 지어낸 조리법, 옵션 개수·뜻, 분류, 명령문, 길이, 특수 문자. <a href="index.html">처음으로</a></p>
+  <p class="foot">모델: Qwen2.5-1.5B-Instruct(Apache-2.0) · 실행: WebLLM 0.2.86(Apache-2.0, WebGPU) · 규칙(v0.3): 숫자 금지, 원문에 없는 재료·사실, 원문에 없는 건강·식이·가격 주장, 빠진 주재료·카페인 정보, 지어낸 조리법, 옵션 개수·뜻, 분류, 명령문, 길이, 특수 문자. 지금 표의 결과는 같은 모델을 개발 PC CPU(llama.cpp)에서 돌린 것입니다. <a href="index.html">처음으로</a></p>
 </main>
 <script type="module">
 import { loadStore, el } from "./js/common.js";
@@ -92,7 +92,7 @@ document.getElementById("run").onclick = async () => {
       result[it.id] = { id: it.id, used, easy_desc: used === "AI" ? out.easy_desc : null, easy_options: used === "AI" ? out.options : null, rule_flags: flags, tries };
       rows.push(result[it.id]); drawTable();
     }
-    made = { store_id: store.menu.store_id, made: new Date().toISOString().slice(0, 10), how: "운영자 화면(WebLLM Qwen2.5-1.5B-Instruct-q4f16_1-MLC) → 띄어쓰기·어미 다듬기 → 규칙 검증(v0.2) → 1회 재생성 → 실패면 원문 유지",
+    made = { store_id: store.menu.store_id, made: new Date().toISOString().slice(0, 10), how: "운영자 화면(WebLLM Qwen2.5-1.5B-Instruct-q4f16_1-MLC) → 띄어쓰기·어미 다듬기 → 규칙 검증(v0.3) → 1회 재생성 → 실패면 원문 유지",
       model: "Qwen2.5-1.5B-Instruct-q4f16_1-MLC", summary: { ai: rows.filter((r) => r.used === "AI").length, original: rows.filter((r) => r.used !== "AI").length }, rows };
     prog.textContent = `끝 — AI ${made.summary.ai}개 / 원문 유지 ${made.summary.original}개. 확인 뒤 내려받아 매장 자료로 저장하세요.`;
     document.getElementById("dl").disabled = false;

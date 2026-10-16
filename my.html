@@ -31,7 +31,22 @@
 <script type="module">
 import { CODES, loadProfile, saveProfile, clearProfile, applyProfile, speak, el } from "./js/common.js";
 const params = new URLSearchParams(location.search);
-const next = params.get("next");
+// v0.3: 돌아갈 화면(next)은 같은 출처의 정해진 페이지와 정해진 값만 받는다(외부 주소·javascript: 등은 무시 — 1차 모의 심사 B 실측)
+const NEXT_PAGES = ["order.html", "demo.html", "index.html", "kiosk.html"];
+function safeNext(raw) {
+  if (!raw) return null;
+  try {
+    const u = new URL(raw, location.href);
+    if (u.origin !== location.origin || !/^https?:$/.test(u.protocol)) return null;
+    const page = u.pathname.split("/").pop();
+    if (!NEXT_PAGES.includes(page)) return null;
+    const q = new URLSearchParams();
+    for (const key of ["store", "k", "p"]) { const v = u.searchParams.get(key); if (v && /^[A-Za-z0-9.]{1,40}$/.test(v)) q.set(key, v); }
+    const qs = q.toString();
+    return page + (qs ? "?" + qs : "");
+  } catch (e) { return null; }
+}
+const next = safeNext(params.get("next"));
 let codes = new Set((loadProfile() || { codes: [] }).codes);
 const box = document.getElementById("toggles");
 for (const [c, v] of Object.entries(CODES)) {

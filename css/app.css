@@ -12,12 +12,12 @@
   --warn: #9a5b00;
   --danger: #b3261e;
   --focus: #ffbf00;
-  --fs: 17px;
+  --fs: 19px;   /* v0.3: 첫 화면 글씨 17px → 19px(1차 모의 심사 E) */
   --btn-h: 48px;
   --radius: 14px;
   --gap: 12px;
 }
-.p-big { --fs: 26px; }
+.p-big { --fs: 28px; }
 .p-touch { --btn-h: 76px; --gap: 18px; }
 .p-hc {
   --bg: #000000; --surface: #0b0b0b; --ink: #ffffff; --sub: #e6e6e6; --line: #ffffff;
@@ -101,3 +101,6 @@ th, td { border-bottom: 1px solid var(--line); padding: 6px 8px; text-align: lef
 .demo iframe { width: 100%; height: 760px; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
 .phoneframe { max-width: 400px; justify-self: center; width: 100%; }
 @media (max-width: 860px) { .demo { grid-template-columns: 1fr; } .demo iframe { height: 640px; } }
+
+/* v0.3: 화면 읽기 프로그램에만 들리는 안내 한 줄(aria-live는 여기만) */
+.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }

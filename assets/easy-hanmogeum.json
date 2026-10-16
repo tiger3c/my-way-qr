@@ -1,12 +1,12 @@
 {
  "store_id": "hanmogeum",
  "made": "2026-10-17",
- "rules": "v0.2",
- "how": "운영자 화면과 같은 방식(모델은 설명 한 줄·옵션 풀이만 → 띄어쓰기·받침 어미 다듬기 → 규칙 검증 → 실패 시 1회 재생성 → 그래도 실패면 원문 유지)으로 Qwen2.5-1.5B-Instruct(q4_k_m, llama.cpp CPU)가 만든 결과(모델 재실행 없이 v0.2 규칙으로 다시 판정). 브라우저 운영자 화면은 같은 계열 모델(WebLLM q4f16)을 씀",
+ "rules": "v0.3",
+ "how": "운영자 화면과 같은 방식(모델은 설명 한 줄·옵션 풀이만 → 띄어쓰기·받침 어미 다듬기 → 규칙 검증 → 실패 시 1회 재생성 → 그래도 실패면 원문 유지)으로 Qwen2.5-1.5B-Instruct(q4_k_m)를 개발 PC의 CPU(llama.cpp)에서 돌려 만든 결과(모델 재실행 없이 v0.3 규칙으로 다시 판정). 운영자 화면의 브라우저 실행(WebLLM)은 WebGPU 기기용 기능으로, 아직 실행 기록이 없음",
  "model": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
  "summary": {
-  "ai": 17,
-  "original": 13
+  "ai": 16,
+  "original": 14
  },
  "rows": [
   {
@@ -87,14 +87,13 @@
   },
   {
    "id": "c07",
-   "used": "AI",
-   "easy_desc": "디카페인 원두로 내린 아메리카노예요.",
-   "easy_options": [
-    "따뜻하게",
-    "차갑게"
-   ],
+   "used": "원문 유지",
+   "easy_desc": null,
+   "easy_options": null,
    "tidy_notes": [],
-   "rule_flags": [],
+   "rule_flags": [
+    "빠진 정보 '카페인'"
+   ],
    "tries": 1
   },
   {
