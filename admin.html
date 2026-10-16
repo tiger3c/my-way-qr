@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>운영자 화면 — 내 방식 QR</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="wrap wide">
+  <h1>매장 운영자 화면 — AI 쉬운 말 만들기</h1>
+  <p class="sub">메뉴를 등록할 때 <b>한 번</b> AI가 설명·옵션 이름을 쉬운 말로 바꾸고, 규칙 검사를 통과한 것만 저장합니다. 손님 휴대폰은 저장된 결과를 바로 씁니다(손님 쪽에서 AI를 돌리지 않음).</p>
+
+  <div class="card notice" id="gpu" aria-live="polite">브라우저 AI 사용 가능 여부를 확인하는 중…</div>
+  <div class="row">
+    <button id="run" type="button" disabled>브라우저 AI로 30개 다시 만들기</button>
+    <button id="dl" type="button" class="ghost" disabled>결과 JSON 내려받기</button>
+    <span id="prog" class="sub small live"></span>
+  </div>
+
+  <h2>저장된 변환 결과</h2>
+  <p class="sub small" id="how"></p>
+  <div style="overflow-x:auto"><table id="tbl"><thead><tr><th>메뉴</th><th>원문</th><th>손님에게 보이는 설명</th><th>판정</th><th>걸린 규칙</th></tr></thead><tbody></tbody></table></div>
+
+  <h2>규칙 검사 직접 해 보기</h2>
+  <div class="card">
+    <p class="sub small">메뉴를 고르고 쉬운 말 설명을 직접 고쳐 넣어 보세요. AI가 이렇게 쓰면 어떤 규칙에 걸리는지 바로 보여 줍니다(AI 없이도 동작).</p>
+    <div class="row"><select id="pickItem" style="font:inherit; min-height:var(--btn-h)"></select></div>
+    <p><textarea id="tryDesc" rows="2" style="width:100%; font:inherit; padding:8px; border-radius:10px"></textarea></p>
+    <p><input id="tryOpts" style="width:100%; font:inherit; min-height:var(--btn-h); padding:0 8px; border-radius:10px" placeholder="옵션(쉼표로 나눔)"></p>
+    <button id="tryBtn" type="button">규칙 검사</button>
+    <div id="tryOut" class="live" aria-live="polite"></div>
+  </div>
+  <p class="foot">모델: Qwen2.5-1.5B-Instruct(Apache-2.0) · 실행: WebLLM 0.2.86(Apache-2.0, WebGPU) · 규칙: 숫자 금지, 원문에 없는 재료·사실, 빠진 주재료, 지어낸 조리법, 옵션 개수·뜻, 분류, 명령문, 길이, 특수 문자. <a href="index.html">처음으로</a></p>
+</main>
+<script type="module">
+import { loadStore, el } from "./js/common.js";
+import { checkEasy, SYSTEM, EX_IN, EX_OUT, SCHEMA, hints } from "./js/rules.js";
+const store = await loadStore();
+const items = store.menu.items;
+const result = Object.fromEntries(store.easy.rows.map((r) => [r.id, { ...r }]));
+document.getElementById("how").textContent = `${store.easy.made} 만든 결과 · ${store.easy.how} · AI ${store.easy.summary.ai}개 / 원문 유지 ${store.easy.summary.original}개`;
+const tbody = document.querySelector("#tbl tbody");
+function drawTable() {
+  tbody.replaceChildren(...items.map((it) => {
+    const r = result[it.id] || {};
+    const shown = r.used === "AI" ? r.easy_desc : it.desc;
+    return el("tr", {}, el("td", {}, el("b", {}, it.name)), el("td", { class: "sub" }, it.desc), el("td", {}, shown),
+      el("td", {}, el("span", { class: "tag " + (r.used === "AI" ? "ai" : "orig") }, r.used || "—")),
+      el("td", { class: "sub small" }, (r.rule_flags || []).join(" · ")));
+  }));
+}
+drawTable();
+
+// WebGPU 확인 — 없으면 이유를 보여 주고 저장된 결과로 시연
+const gpuBox = document.getElementById("gpu");
+let adapter = null;
+try { adapter = navigator.gpu ? await navigator.gpu.requestAdapter() : null; } catch (e) { adapter = null; }
+if (!adapter) {
+  gpuBox.textContent = "이 기기·브라우저에서는 WebGPU를 쓸 수 없어 브라우저 AI를 돌릴 수 없습니다. 아래 '저장된 변환 결과'(같은 계열 모델로 만든 결과)를 보여 줍니다. 운영자 PC(그래픽 메모리 약 2GB 이상, 최신 Chrome·Edge)에서는 이 버튼으로 다시 만들 수 있습니다.";
+} else {
+  gpuBox.classList.remove("notice");
+  gpuBox.textContent = "WebGPU 사용 가능 — 버튼을 누르면 모델(약 1GB)을 한 번 내려받아 브라우저 안에서 변환합니다. 메뉴 내용은 서버로 보내지 않습니다.";
+  document.getElementById("run").disabled = false;
+}
+
+let engine = null, made = null;
+const prog = document.getElementById("prog");
+document.getElementById("run").onclick = async () => {
+  document.getElementById("run").disabled = true;
+  try {
+    const webllm = await import("https://esm.run/@mlc-ai/web-llm@0.2.86");
+    engine = await webllm.CreateMLCEngine("Qwen2.5-1.5B-Instruct-q4f16_1-MLC", { initProgressCallback: (r) => (prog.textContent = r.text) });
+    const rows = [];
+    for (const [n, it] of items.entries()) {
+      const h = hints(it, store.glossary);
+      let user = JSON.stringify({ id: it.id, name: it.name, desc: it.desc, options: it.options });
+      if (h.length) user += "\n바꿔 쓸 말(꼭 이렇게): " + h.join(", ");
+      let out = {}, flags = ["시도 안 함"], tries = 0;
+      for (let t = 0; t < 2; t++) {
+        tries = t + 1;
+        prog.textContent = `${n + 1}/${items.length} ${it.name} — ${t ? "다시 만드는 중" : "만드는 중"}`;
+        const r = await engine.chat.completions.create({
+          messages: [{ role: "system", content: SYSTEM },
+            { role: "user", content: JSON.stringify(EX_IN) + "\n바꿔 쓸 말(꼭 이렇게): 파우더=가루, 스팀 밀크=데운 우유, 휘핑=달콤한 크림, HOT=따뜻하게, ICE=차갑게" },
+            { role: "assistant", content: JSON.stringify(EX_OUT) }, { role: "user", content: user }],
+          response_format: { type: "json_object", schema: JSON.stringify(SCHEMA) }, temperature: 0.2 + 0.3 * t, max_tokens: 200 });
+        try { out = JSON.parse(r.choices[0].message.content); flags = checkEasy(it, out); } catch (e) { out = {}; flags = ["JSON 오류"]; }
+        if (!flags.length) break;
+      }
+      const used = flags.length ? "원문 유지" : "AI";
+      result[it.id] = { id: it.id, used, easy_desc: used === "AI" ? out.easy_desc : null, easy_options: used === "AI" ? out.options : null, rule_flags: flags, tries };
+      rows.push(result[it.id]); drawTable();
+    }
+    made = { store_id: store.menu.store_id, made: new Date().toISOString().slice(0, 10), how: "운영자 화면(WebLLM Qwen2.5-1.5B-Instruct-q4f16_1-MLC) → 규칙 검증 → 1회 재생성 → 실패면 원문 유지",
+      model: "Qwen2.5-1.5B-Instruct-q4f16_1-MLC", summary: { ai: rows.filter((r) => r.used === "AI").length, original: rows.filter((r) => r.used !== "AI").length }, rows };
+    prog.textContent = `끝 — AI ${made.summary.ai}개 / 원문 유지 ${made.summary.original}개. 확인 뒤 내려받아 매장 자료로 저장하세요.`;
+    document.getElementById("dl").disabled = false;
+  } catch (e) {
+    prog.textContent = "브라우저 AI 실행 실패: " + (e && e.message ? e.message : e) + " — 저장된 결과를 계속 씁니다.";
+  }
+};
+document.getElementById("dl").onclick = () => {
+  const a = el("a", { href: URL.createObjectURL(new Blob([JSON.stringify(made, null, 1)], { type: "application/json" })), download: `easy-${store.menu.store_id}.json` });
+  document.body.append(a); a.click(); a.remove();
+};
+
+// 규칙 검사 직접 해 보기
+const pick = document.getElementById("pickItem");
+items.forEach((it) => pick.append(el("option", { value: it.id }, `${it.name} — ${it.desc}`)));
+function loadTry() {
+  const it = items.find((i) => i.id === pick.value), r = result[it.id];
+  document.getElementById("tryDesc").value = r && r.used === "AI" ? r.easy_desc : "";
+  document.getElementById("tryOpts").value = (r && r.easy_options ? r.easy_options : it.options).join(", ");
+  document.getElementById("tryOut").textContent = "";
+}
+pick.onchange = loadTry; loadTry();
+document.getElementById("tryBtn").onclick = () => {
+  const it = items.find((i) => i.id === pick.value);
+  const opts = document.getElementById("tryOpts").value.split(",").map((s) => s.trim()).filter(Boolean);
+  const flags = checkEasy(it, { id: it.id, easy_desc: document.getElementById("tryDesc").value.trim(), options: opts });
+  const out = document.getElementById("tryOut");
+  out.replaceChildren(flags.length ? el("div", { class: "card allergy" }, el("b", {}, "걸린 규칙 → 이 글은 손님에게 보이지 않고 원문이 나갑니다"), el("ul", {}, ...flags.map((f) => el("li", {}, f))))
+    : el("div", { class: "card" }, el("b", {}, "통과 → 이 쉬운 말이 손님 화면에 나갑니다")));
+};
+</script>
+</body>
+</html>

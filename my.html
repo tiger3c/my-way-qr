@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>내 방식 정하기 — 내 방식 QR</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="wrap">
+  <h1>내 방식 정하기</h1>
+  <p class="sub">필요한 것만 켜세요. 고른 내용은 <b>이 휴대폰 안에만</b> 저장되고, 장애 여부나 병명은 묻지 않습니다.</p>
+  <div class="card" id="toggles"></div>
+  <div class="card" id="preview" aria-live="polite">
+    <div class="step-title">미리 보기</div>
+    <p id="pv-text">카페라떼 — 에스프레소에 스팀 밀크를 더한 부드러운 라떼</p>
+    <button id="pv-btn" type="button">이 글 읽어 주기</button>
+  </div>
+  <button id="save" class="block" type="button">저장하고 계속</button>
+  <button id="reset" class="block ghost" type="button">설정 지우기</button>
+  <div class="card">
+    <div class="step-title">키오스크 QR을 찍을 수 없을 때</div>
+    <p class="sub small">키오스크 화면에 나온 네 자리 번호를 넣으세요(시제품은 가상 매장 한 곳만 있습니다).</p>
+    <div class="row">
+      <input id="code" class="grow" inputmode="numeric" maxlength="4" aria-label="키오스크 번호 네 자리" style="font:inherit; min-height:var(--btn-h); padding:0 12px; border-radius:12px; border:2px solid var(--line); background:var(--surface); color:var(--ink)">
+      <button id="go" type="button">주문 화면으로</button>
+    </div>
+  </div>
+  <p class="foot"><a href="index.html">처음으로</a></p>
+</main>
+<script type="module">
+import { CODES, loadProfile, saveProfile, clearProfile, applyProfile, speak, el } from "./js/common.js";
+const params = new URLSearchParams(location.search);
+const next = params.get("next");
+let codes = new Set((loadProfile() || { codes: [] }).codes);
+const box = document.getElementById("toggles");
+for (const [c, v] of Object.entries(CODES)) {
+  const id = "t-" + c;
+  const input = el("input", { type: "checkbox", id, "data-code": c, checked: codes.has(c) || false });
+  input.addEventListener("change", () => { input.checked ? codes.add(c) : codes.delete(c); refresh(); });
+  box.append(el("label", { class: "toggle", for: id }, el("span", {}, el("b", {}, v.label), el("br"), el("span", { class: "sub small" }, v.hint)), input));
+}
+function refresh() {
+  applyProfile({ codes: [...codes] });
+  document.getElementById("pv-text").textContent = codes.has("EASY")
+    ? "카페라떼 — 진한 커피 원액에 데운 우유를 더한 부드러운 라떼예요."
+    : "카페라떼 — 에스프레소에 스팀 밀크를 더한 부드러운 라떼";
+}
+refresh();
+document.getElementById("pv-btn").onclick = () => speak(document.getElementById("pv-text").textContent, codes.has("VOICE"));
+document.getElementById("save").onclick = () => {
+  saveProfile([...codes]);
+  location.href = next ? next : "order.html?store=hanmogeum";
+};
+document.getElementById("reset").onclick = () => { clearProfile(); codes = new Set(); document.querySelectorAll("#toggles input").forEach((i) => (i.checked = false)); refresh(); };
+document.getElementById("go").onclick = () => {
+  const v = document.getElementById("code").value.trim();
+  if (!/^\d{4}$/.test(v)) { alert("네 자리 번호를 넣어 주세요."); return; }
+  saveProfile([...codes]);
+  location.href = `order.html?store=hanmogeum&k=${v}`;
+};
+</script>
+</body>
+</html>

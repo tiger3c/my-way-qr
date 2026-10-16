@@ -1,0 +1,325 @@
+{
+ "store_id": "hanmogeum",
+ "made": "2026-10-17",
+ "how": "운영자 화면과 같은 방식(모델은 설명 한 줄·옵션 풀이만 → 규칙 검증 → 실패 시 1회 재생성 → 그래도 실패면 원문 유지)으로 Qwen2.5-1.5B-Instruct(q4_k_m, llama.cpp CPU)가 만든 결과. 브라우저 운영자 화면은 같은 계열 모델(WebLLM q4f16)을 씀",
+ "model": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+ "summary": {
+  "ai": 20,
+  "original": 10
+ },
+ "rows": [
+  {
+   "id": "c01",
+   "used": "원문 유지",
+   "easy_desc": null,
+   "easy_options": null,
+   "rule_flags": [
+    "숫자 '500'"
+   ],
+   "tries": 2
+  },
+  {
+   "id": "c02",
+   "used": "AI",
+   "easy_desc": "진한 커피 원액에 데운 우유를 더한 부드러운 라떼예요.",
+   "easy_options": [
+    "따뜻하게",
+    "차갑게",
+    "귀리 우유 변경"
+   ],
+   "rule_flags": [],
+   "tries": 1
+  },
+  {
+   "id": "c03",
+   "used": "AI",
+   "easy_desc": "바닐라 단맛 액을 넣은 달콤한 라떼예요.",
+   "easy_options": [
+    "따뜻하게",
+    "차갑게",
+    "시럽 덜 달게"
+   ],
+   "rule_flags": [],
+   "tries": 1
+  },
+  {
+   "id": "c04",
+   "used": "원문 유지",
+   "easy_desc": null,
+   "easy_options": null,
+   "rule_flags": [
+    "옵션 개수 3≠2",
+    "설명 김"
+   ],
+   "tries": 2
+  },
+  {
+   "id": "c05",
+   "used": "AI",
+   "easy_desc": "초콜릿 소스와 진한 커피 원액, 데운 우유에 달콤한 크림을 올린 커피 예요.",
+   "easy_options": [
+    "따뜻하게",
+    "차갑게",
+    "휘핑 크림 빼기"
+   ],
+   "rule_flags": [],
+   "tries": 1
+  },
+  {
+   "id": "c06",
+   "used": "AI",
+   "easy_desc": "찬물로 오래 우린 커피 원액 + 물. 차갑게만 예요.",
+   "easy_options": [
+    "차갑게만"
+   ],
+   "rule_flags": [],
+   "tries": 1
+  },
+  {
+   "id": "c07",
+   "used": "AI",
+   "easy_desc": "디카페인 원두로 내린 아메리카노예요.",
+   "easy_options": [
+    "따뜻하게",
+    "차갑게"
+   ],
+   "rule_flags": [],
+   "tries": 1
+  },
+  {
+   "id": "c08",
+   "used": "원문 유지",
+   "easy_desc": null,
+   "easy_options": null,
+   "rule_flags": [
+    "옵션 개수 2≠1",
+    "설명이 명령문"
+   ],
+   "tries": 2
+  },
+  {
+   "id": "c09",
+   "used": "AI",
+   "easy_desc": "진한 커피 위에 달콤한 크림을 올린 비엔나 스타일 커피예요.",
+   "easy_options": [
+    "차갑게"
+   ],
+   "rule_flags": [],
+   "tries": 1
+  },
+  {
+   "id": "c10",
+   "used": "AI",
+   "easy_desc": "바닐라 아이스크림 위에 진한 커피 원액 한 번을 부어 먹는 디저트 커피예요.",
+   "easy_options": [],
+   "rule_flags": [],
+   "tries": 1
+  },
+  {
+   "id": "t01",
+   "used": "AI",
+   "easy_desc": "감귤류 향이 나는 홍차예요.",
+   "easy_options": [
+    "따뜻하게",
+    "차갑게"
+   ],
+   "rule_flags": [],
+   "tries": 1
+  },
+  {
+   "id": "t02",
+   "used": "AI",
+   "easy_desc": "카페인 없는 캐모마일 꽃차예요.",
+   "easy_options": [
+    "따뜻하게"
+   ],
+   "rule_flags": [],
+   "tries": 1
+  },
+  {
+   "id": "t03",
+   "used": "AI",
+   "easy_desc": "국산 유자청을 따뜻한 물에 탄 차예요.",
+   "easy_options": [
+    "따뜻하게",
+    "차갑게"
+   ],
+   "rule_flags": [],
+   "tries": 1
+  },
+  {
+   "id": "t04",
+   "used": "원문 유지",
+   "easy_desc": null,
+   "easy_options": null,
+   "rule_flags": [
+    "재료 빠짐 '녹차'"
+   ],
+   "tries": 1
+  },
+  {
+   "id": "t05",
+   "used": "AI",
+   "easy_desc": "홍차와 우유를 섞은 밀크티예요.",
+   "easy_options": [
+    "따뜻하게",
+    "차갑게"
+   ],
+   "rule_flags": [],
+   "tries": 1
+  },
+  {
+   "id": "n01",
+   "used": "AI",
+   "easy_desc": "레몬청과 탄산수를 섞은 음료예요.",
+   "easy_options": [
+    "차갑게",
+    "탄산 빼기"
+   ],
+   "rule_flags": [],
+   "tries": 1
+  },
+  {
+   "id": "n02",
+   "used": "원문 유지",
+   "easy_desc": null,
+   "easy_options": null,
+   "rule_flags": [
+    "조리법 지어냄 '증발'"
+   ],
+   "tries": 1
+  },
+  {
+   "id": "n03",
+   "used": "AI",
+   "easy_desc": "냉동 딸기와 요거트를 얼음과 함께 간 스무디예요.",
+   "easy_options": [
+    "차갑게"
+   ],
+   "rule_flags": [],
+   "tries": 1
+  },
+  {
+   "id": "n04",
+   "used": "AI",
+   "easy_desc": "망고 곱게 간 과일과 얼음을 갈아 만든 스무디예요.",
+   "easy_options": [
+    "차갑게"
+   ],
+   "rule_flags": [],
+   "tries": 1
+  },
+  {
+   "id": "n05",
+   "used": "원문 유지",
+   "easy_desc": null,
+   "easy_options": null,
+   "rule_flags": [
+    "설명 김"
+   ],
+   "tries": 2
+  },
+  {
+   "id": "n06",
+   "used": "AI",
+   "easy_desc": "생딸기청 위에 차가운 우유를 부은 라떼예요.",
+   "easy_options": [
+    "차갑게"
+   ],
+   "rule_flags": [],
+   "tries": 1
+  },
+  {
+   "id": "n07",
+   "used": "원문 유지",
+   "easy_desc": null,
+   "easy_options": null,
+   "rule_flags": [
+    "조리법 지어냄 '익힌'"
+   ],
+   "tries": 2
+  },
+  {
+   "id": "n08",
+   "used": "원문 유지",
+   "easy_desc": null,
+   "easy_options": null,
+   "rule_flags": [
+    "숫자 '100'"
+   ],
+   "tries": 2
+  },
+  {
+   "id": "d01",
+   "used": "원문 유지",
+   "easy_desc": null,
+   "easy_options": null,
+   "rule_flags": [
+    "숫자 '1'",
+    "개념 추가 '알레르기 안내'",
+    "한글·기본 기호 밖 문자"
+   ],
+   "tries": 2
+  },
+  {
+   "id": "d02",
+   "used": "AI",
+   "easy_desc": "진한 초콜릿 브라우니예요.",
+   "easy_options": [
+    "데워 드림"
+   ],
+   "rule_flags": [],
+   "tries": 1
+  },
+  {
+   "id": "d03",
+   "used": "AI",
+   "easy_desc": "버터향 스콘에 딸기잼을 올린 스콘예요.",
+   "easy_options": [
+    "데워 드림"
+   ],
+   "rule_flags": [],
+   "tries": 1
+  },
+  {
+   "id": "d04",
+   "used": "AI",
+   "easy_desc": "버터와 굵은 소금을 넣은 빵예요.",
+   "easy_options": [
+    "데워 드림"
+   ],
+   "rule_flags": [],
+   "tries": 1
+  },
+  {
+   "id": "d05",
+   "used": "AI",
+   "easy_desc": "버터를 겹겹이 넣어 구운 빵입니다.",
+   "easy_options": [
+    "데워 드림"
+   ],
+   "rule_flags": [],
+   "tries": 1
+  },
+  {
+   "id": "d06",
+   "used": "AI",
+   "easy_desc": "햄, 치즈, 양상추를 넣은 샌드위치예요.",
+   "easy_options": [
+    "데워 드림"
+   ],
+   "rule_flags": [],
+   "tries": 1
+  },
+  {
+   "id": "d07",
+   "used": "원문 유지",
+   "easy_desc": null,
+   "easy_options": null,
+   "rule_flags": [
+    "숫자 '2'"
+   ],
+   "tries": 2
+  }
+ ]
+}

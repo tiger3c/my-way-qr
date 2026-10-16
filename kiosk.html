@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>키오스크 — 내 방식 QR</title>
+<link rel="stylesheet" href="css/app.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+</head>
+<body class="kiosk">
+<main class="wrap wide">
+  <div class="row" style="justify-content:space-between">
+    <b id="store" style="font-size:16px">카페 한모금(가상)</b>
+    <span class="sub small">일반 키오스크 화면(시연용)</span>
+  </div>
+  <button id="myway" class="myway" type="button">내 방식으로 주문 — 휴대폰으로 QR 찍기</button>
+  <div id="arrived" class="card notice" hidden aria-live="polite"></div>
+  <div class="tabs" id="tabs"></div>
+  <div class="grid" id="grid"></div>
+  <p class="foot">이 화면은 '앱에 내 방식 QR 기능(SDK)을 넣은 키오스크'를 가정한 시연 화면입니다. 실제 주문·결제는 이루어지지 않습니다.</p>
+</main>
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mtitle">
+  <div class="card" style="color:#1d1f23">
+    <div class="step-title" id="mtitle">휴대폰 카메라로 찍으세요</div>
+    <div class="qrbox" id="qr"></div>
+    <p>키오스크 번호 <b id="kcode" style="font-size:1.6em; letter-spacing:4px"></b></p>
+    <p class="sub small">QR을 못 찍으면 「내 방식 정하기」 화면에서 이 번호를 넣으세요. 휴대폰에 저장된 설정대로 주문 화면이 열립니다.</p>
+    <a id="qrlink" class="small" href="#" target="_blank" rel="noopener">이 기기에서 열어 보기</a>
+    <button id="close" class="block" type="button">닫기</button>
+  </div>
+</div>
+<script type="module">
+import { loadStore, won, channel, el } from "./js/common.js";
+const store = await loadStore();
+document.getElementById("store").textContent = store.menu.store;
+const cats = [...new Set(store.menu.items.map((i) => i.category))];
+let cur = cats[0];
+const tabs = document.getElementById("tabs"), grid = document.getElementById("grid");
+function draw() {
+  tabs.replaceChildren(...cats.map((c) => el("button", { type: "button", class: c === cur ? "" : "ghost", onclick: () => { cur = c; draw(); } }, c)));
+  grid.replaceChildren(...store.menu.items.filter((i) => i.category === cur).map((i) =>
+    el("div", { class: "item" }, el("b", {}, i.name), el("span", {}, won(i.price)), el("div", { class: "sub" }, i.desc), el("div", { class: "sub" }, i.options.join(" / ")))));
+}
+draw();
+// 키오스크 번호: 기기마다 고정(시연에선 무작위 네 자리)
+let k = sessionStorage.getItem("mywayqr.kiosk");
+if (!k) { k = String(1000 + Math.floor(Math.random() * 9000)); sessionStorage.setItem("mywayqr.kiosk", k); }
+const url = new URL(`order.html?store=${store.menu.store_id}&k=${k}`, location.href).href;
+const modal = document.getElementById("modal");
+document.getElementById("myway").onclick = () => {
+  const q = qrcode(0, "M"); q.addData(url); q.make();
+  document.getElementById("qr").innerHTML = q.createSvgTag({ cellSize: 6, margin: 2, scalable: true });
+  document.getElementById("kcode").textContent = k;
+  document.getElementById("qrlink").href = url;
+  modal.classList.add("open"); document.getElementById("close").focus();
+};
+document.getElementById("close").onclick = () => modal.classList.remove("open");
+if (new URLSearchParams(location.search).get("open") === "qr") document.getElementById("myway").click();
+// 같은 기기에서 온 주문 알림(한 기기 시연). 두 기기 사이 전달은 서버가 필요해 시제품에서는 하지 않음
+channel().addEventListener("message", (ev) => {
+  const m = ev.data || {};
+  if (m.type !== "order") return;
+  modal.classList.remove("open");
+  const box = document.getElementById("arrived");
+  box.hidden = false;
+  box.replaceChildren(el("b", {}, `내 방식 주문이 도착했어요 — 주문 번호 ${m.no}`), el("div", {}, m.lines.join(" · ")), el("div", { class: "price" }, `합계 ${won(m.total)}`));
+});
+</script>
+</body>
+</html>

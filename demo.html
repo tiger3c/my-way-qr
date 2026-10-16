@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>한 기기로 체험 — 내 방식 QR</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="wrap wide">
+  <h1>한 기기로 체험하기</h1>
+  <p class="sub">왼쪽은 매장 키오스크, 오른쪽은 손님 휴대폰입니다. 아래 단추로 '내 방식'을 바꿔 보세요. 같은 메뉴·같은 가격이 그 방식으로 바뀝니다.</p>
+  <div class="row" id="presets" role="group" aria-label="내 방식 조합"></div>
+  <div class="demo" style="margin-top:12px">
+    <iframe id="kiosk" title="키오스크 화면"></iframe>
+    <div class="phoneframe"><iframe id="phone" title="휴대폰 화면"></iframe></div>
+  </div>
+  <p class="foot">휴대폰 화면에서 주문을 끝내면 왼쪽 키오스크에 주문이 도착합니다(같은 기기 안에서만 — 두 기기 사이 전달은 실제 서비스에서 키오스크 쪽 연동이 맡습니다). <a href="index.html">처음으로</a></p>
+</main>
+<script type="module">
+import { el } from "./js/common.js";
+let k = sessionStorage.getItem("mywayqr.kiosk");
+if (!k) { k = String(1000 + Math.floor(Math.random() * 9000)); sessionStorage.setItem("mywayqr.kiosk", k); }
+document.getElementById("kiosk").src = "kiosk.html";
+const PRESETS = [
+  ["기본 화면", ""],
+  ["큰 글씨 + 큰 버튼", "BIG.TOUCH"],
+  ["쉬운 말 + 한 가지씩", "EASY.ONE"],
+  ["또렷한 색 + 읽어 주기", "HC.VOICE"],
+  ["모두 켜기", "BIG.HC.EASY.VOICE.TOUCH.ONE"],
+];
+const phone = document.getElementById("phone");
+function go(p, btn) {
+  phone.src = `order.html?store=hanmogeum&k=${k}&p=${p || "NONE"}`;
+  document.querySelectorAll("#presets button").forEach((b) => b.classList.toggle("ghost", b !== btn));
+}
+const box = document.getElementById("presets");
+PRESETS.forEach(([label, p], i) => {
+  const b = el("button", { type: "button", class: i === 2 ? "" : "ghost" }, label);
+  b.onclick = () => go(p, b);
+  box.append(b);
+});
+go(PRESETS[2][1], box.children[2]);
+</script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>내 방식 주문 — 내 방식 QR</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="wrap" id="app" aria-live="polite"></main>
+<div class="wrap callbar" id="bar">
+  <button id="staff" class="ghost" type="button">직원 부르기</button>
+  <button id="cartbtn" class="ghost" type="button">담은 것 <span id="cartn">0</span></button>
+</div>
+<script type="module">
+import { loadProfile, profileFromUrl, applyProfile, loadStore, viewItem, won, speak, channel, el, CODES } from "./js/common.js";
+
+const qs = new URLSearchParams(location.search);
+const k = qs.get("k") || "";
+let profile = profileFromUrl() || loadProfile();
+const app = document.getElementById("app");
+const store = await loadStore();
+const cart = [];
+let codes = applyProfile(profile);
+
+function say(text) { if (codes.has("VOICE")) speak(text, true); }
+function screen(title, ...body) {
+  const readBtn = codes.has("VOICE") ? el("button", { type: "button", class: "ghost", onclick: () => speak(app.innerText, true) }, "다시 읽기") : null;
+  app.replaceChildren(el("div", { class: "row" }, el("div", { class: "step-title grow" }, title), readBtn), ...body.filter(Boolean));
+  window.scrollTo(0, 0);
+  const h = app.querySelector(".step-title"); if (h) { h.setAttribute("tabindex", "-1"); h.focus(); }
+  say(title);
+  document.getElementById("cartn").textContent = cart.length;
+}
+
+function start() {
+  if (!profile) {
+    screen("내 방식이 아직 없어요",
+      el("p", {}, "큰 글씨·쉬운 말·읽어 주기 같은 설정을 먼저 고르면, 이 매장 메뉴가 그 방식으로 보여요."),
+      el("a", { class: "btn block", href: `my.html?next=${encodeURIComponent(location.pathname.split("/").pop() + location.search)}` }, "내 방식 정하기"),
+      el("button", { type: "button", class: "block ghost", onclick: () => { profile = { codes: [] }; codes = applyProfile(profile); home(); } }, "기본 화면으로 계속"));
+    return;
+  }
+  home();
+}
+
+function home() {
+  const on = [...codes].map((c) => CODES[c].label);
+  const cats = [...new Set(store.menu.items.map((i) => i.category))];
+  screen(`${store.menu.store} — 무엇을 드릴까요?`,
+    el("p", { class: "sub small" }, on.length ? `내 방식: ${on.join(" · ")}` : "기본 화면"),
+    ...cats.map((c) => el("button", { type: "button", class: "block", onclick: () => list(c) }, c)),
+    el("p", { class: "sub small" }, `키오스크 ${k || "(번호 없음)"}에 연결된 화면입니다. 가격은 매장 원래 가격 그대로예요.`));
+}
+
+function list(cat) {
+  const items = store.menu.items.filter((i) => i.category === cat).map((i) => viewItem(i, store, codes.has("EASY")));
+  screen(`${cat} — 하나를 고르세요`,
+    ...items.map((v) => el("button", { type: "button", class: "block ghost", style: "flex-direction:column; align-items:flex-start; text-align:left",
+      onclick: () => item(v) },
+      el("span", { class: "row", style: "width:100%" }, el("b", { class: "grow" }, v.name), el("span", { class: "price" }, won(v.price))),
+      el("span", { class: "sub", style: "font-weight:400" }, v.desc))),
+    el("button", { type: "button", class: "block ghost", onclick: home }, "← 처음으로"));
+}
+
+function stepsOf(v) {
+  // 고를 것: 온도(HOT/ICE) 하나 고르기 → 나머지 옵션은 '할까요?' 하나씩. 단계는 코드가 만든다(AI 관여 없음)
+  const temp = v.rawOptions.map((o, i) => (o === "HOT" || o === "ICE") ? i : -1).filter((i) => i >= 0);
+  const steps = [];
+  if (temp.length >= 2) steps.push({ kind: "one", title: "따뜻하게, 차갑게 중 하나를 고르세요", idx: temp });
+  else if (temp.length === 1) steps.push({ kind: "info", title: `${v.options[temp[0]]}만 있어요`, idx: temp });
+  v.rawOptions.forEach((o, i) => { if (!temp.includes(i)) steps.push({ kind: "yn", title: `'${v.options[i]}' 할까요?`, idx: [i] }); });
+  return steps;
+}
+
+function item(v) {
+  const steps = stepsOf(v);
+  const pick = { temp: null, on: new Set() };
+  const head = [
+    el("div", { class: "card" },
+      el("div", { class: "row" }, el("b", { class: "grow" }, v.name), el("span", { class: "price" }, won(v.price))),
+      el("p", {}, v.desc),
+      el("span", { class: "tag " + (v.source === "AI 쉬운 말" ? "ai" : "orig") }, v.source)),
+    v.allergy ? el("div", { class: "card allergy" }, el("b", {}, "알레르기 정보(매장 원문)"), el("div", {}, v.allergy)) : null,
+  ];
+  const onePerScreen = codes.has("ONE");
+  let si = 0;
+  function render() {
+    if (onePerScreen) {
+      if (si >= steps.length) return review();
+      const s = steps[si];
+      screen(s.title, ...head, stepBox(s, true), el("button", { type: "button", class: "block ghost", onclick: () => (si > 0 ? (si--, render()) : list(v.category)) }, "← 뒤로"));
+    } else {
+      screen(v.name, ...head, ...steps.map((s) => el("div", { class: "card" }, el("b", {}, s.title), stepBox(s, false))),
+        el("button", { type: "button", class: "block", onclick: add }, "담기"),
+        el("button", { type: "button", class: "block ghost", onclick: () => list(v.category) }, "← 다른 메뉴"));
+    }
+  }
+  function stepBox(s, advance) {
+    const next = () => { if (advance) { si++; render(); } else render(); };
+    if (s.kind === "info") { if (advance) return el("button", { type: "button", class: "block", onclick: next }, "알겠어요"); return el("p", { class: "sub" }, "고를 것 없음"); }
+    if (s.kind === "one") return el("div", { class: "choice" }, ...s.idx.map((i) =>
+      el("button", { type: "button", "aria-pressed": pick.temp === i ? "true" : "false", onclick: () => { pick.temp = i; next(); } }, v.options[i])));
+    const i = s.idx[0];
+    const extra = v.extra[i] ? ` (+${won(v.extra[i])})` : "";
+    return el("div", { class: "choice" },
+      el("button", { type: "button", "aria-pressed": pick.on.has(i) ? "true" : "false", onclick: () => { pick.on.add(i); next(); } }, `네${extra}`),
+      el("button", { type: "button", "aria-pressed": !pick.on.has(i) ? "true" : "false", onclick: () => { pick.on.delete(i); next(); } }, "아니요"));
+  }
+  function total() { return v.price + [...pick.on].reduce((s, i) => s + v.extra[i], 0); }
+  function label() {
+    const parts = [];
+    if (pick.temp != null) parts.push(v.options[pick.temp]);
+    for (const i of pick.on) parts.push(v.options[i]);
+    return v.name + (parts.length ? ` (${parts.join(", ")})` : "");
+  }
+  function review() {
+    screen("이대로 담을까요?", el("div", { class: "card" }, el("p", {}, label()), el("p", { class: "price" }, won(total()))),
+      el("button", { type: "button", class: "block", onclick: add }, "담기"),
+      el("button", { type: "button", class: "block ghost", onclick: () => { si = 0; render(); } }, "처음부터 다시 고르기"));
+  }
+  function add() {
+    if (steps.some((s) => s.kind === "one") && pick.temp == null) { say("따뜻하게, 차갑게 중 하나를 골라 주세요"); alert("따뜻하게, 차갑게 중 하나를 골라 주세요."); return; }
+    cart.push({ label: label(), price: total() });
+    screen("담았어요", el("div", { class: "card" }, el("p", {}, label()), el("p", { class: "price" }, won(total()))),
+      el("button", { type: "button", class: "block", onclick: confirmOrder }, "주문 확인하기"),
+      el("button", { type: "button", class: "block ghost", onclick: home }, "더 고르기"));
+  }
+  render();
+}
+
+function confirmOrder() {
+  if (!cart.length) { screen("아직 담은 것이 없어요", el("button", { type: "button", class: "block", onclick: home }, "메뉴 보기")); return; }
+  const sum = cart.reduce((s, c) => s + c.price, 0);
+  screen("결제 전에 확인하세요",
+    el("div", { class: "card" }, ...cart.map((c, i) => el("div", { class: "row" }, el("span", { class: "grow" }, `${i + 1}. ${c.label}`), el("span", { class: "price" }, won(c.price)),
+      el("button", { type: "button", class: "ghost", "aria-label": `${c.label} 빼기`, onclick: () => { cart.splice(i, 1); confirmOrder(); } }, "빼기"))),
+      el("p", { class: "price", style: "font-size:1.3em" }, `합계 ${won(sum)}`)),
+    el("button", { type: "button", class: "block", onclick: () => pay(sum) }, "결제하기(시연)"),
+    el("button", { type: "button", class: "block ghost", onclick: home }, "더 고르기"));
+}
+
+function pay(sum) {
+  const no = "A-" + String(10 + Math.floor(Math.random() * 90));
+  channel().postMessage({ type: "order", k, no, lines: cart.map((c) => c.label), total: sum });
+  screen(`주문했어요 — 번호 ${no}`,
+    el("div", { class: "card" }, el("p", {}, "시연이라 실제 결제는 되지 않았어요."), el("p", {}, `합계 ${won(sum)}`)),
+    el("p", { class: "sub small" }, "실제 서비스에서는 이 주문이 키오스크로 넘어가 결제됩니다(시제품은 같은 기기 시연 화면에서만 키오스크에 표시)."),
+    el("button", { type: "button", class: "block ghost", onclick: () => { cart.length = 0; home(); } }, "처음으로"));
+}
+
+document.getElementById("staff").onclick = () => {
+  channel().postMessage({ type: "staff", k });
+  screen("직원을 불렀어요", el("p", {}, "잠시만 기다려 주세요. (시연: 실제 호출은 되지 않아요)"), el("button", { type: "button", class: "block ghost", onclick: home }, "처음으로"));
+};
+document.getElementById("cartbtn").onclick = confirmOrder;
+start();
+</script>
+</body>
+</html>

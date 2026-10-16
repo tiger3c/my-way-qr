@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>내 방식 QR — 키오스크를 내 방식으로</title>
+<meta name="description" content="휴대폰에 저장한 접근성 설정을 QR로 이어 붙이면 키오스크 주문 화면이 큰 글씨·쉬운 말·읽어 주기로 바뀌는 시제품">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="wrap">
+  <h1>내 방식 QR</h1>
+  <p class="sub">키오스크 앞에서 망설이지 않도록, <b>내 휴대폰에 한 번 저장한 설정</b>(큰 글씨·또렷한 색·쉬운 말·천천히 읽어 주기·큰 버튼)대로 주문 화면을 바꿔 보여 주는 시제품입니다.</p>
+
+  <div class="card">
+    <h2 style="margin-top:0">이렇게 씁니다</h2>
+    <ol>
+      <li><b>내 방식 정하기</b> — 휴대폰에서 필요한 기능만 고릅니다(장애 여부·병명은 묻지 않습니다). 이 기기 안에만 저장됩니다.</li>
+      <li><b>키오스크의 QR 찍기</b> — 키오스크 화면의 「내 방식으로 주문」 QR을 휴대폰 카메라로 찍습니다.</li>
+      <li><b>내 화면으로 주문</b> — 같은 메뉴·같은 가격이 내 방식으로 나옵니다. 결제 전에 한 번 더 확인하고, 어려우면 「직원 부르기」를 누릅니다.</li>
+    </ol>
+  </div>
+
+  <a class="btn block" href="demo.html">한 기기로 바로 체험하기</a>
+  <a class="btn block ghost" href="my.html">내 방식 정하기(휴대폰)</a>
+  <a class="btn block ghost" href="kiosk.html">키오스크 화면 보기(QR이 뜨는 쪽)</a>
+  <a class="btn block ghost" href="admin.html">매장 운영자 화면(AI 쉬운 말 만들기)</a>
+
+  <div class="card">
+    <h2 style="margin-top:0">AI가 하는 일과 하지 않는 일</h2>
+    <ul>
+      <li><b>하는 일</b>: 매장이 메뉴를 등록할 때, 브라우저 안 AI(Qwen2.5-1.5B, WebLLM)가 메뉴 설명과 옵션 이름을 <b>쉬운 말</b>로 바꿉니다. 결과는 규칙 검사(숫자·지어낸 재료·빠진 재료·뜻이 바뀐 옵션 등)를 통과한 것만 저장하고, 통과하지 못하면 <b>원문을 그대로</b> 씁니다.</li>
+      <li><b>하지 않는 일</b>: 메뉴 이름·가격·알레르기 정보는 AI가 건드리지 않고 매장 원본 값을 그대로 보여 줍니다. 손님의 설정은 서버로 보내지 않습니다.</li>
+    </ul>
+  </div>
+
+  <p class="foot">시제품(2026-10) · 가상 매장 「카페 한모금」과 가상 메뉴로 시연합니다(실존 매장·상표 아님). 주문·결제는 실제로 이루어지지 않습니다.<br>
+  2026 AI 라이프 솔루션 챌린지 응모작 — 「AI 라이프 아이디어 챌린지」 수상 후보작 「내 방식 QR」을 구현했습니다.</p>
+</main>
+</body>
+</html>
