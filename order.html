@@ -14,7 +14,7 @@
   <button id="cartbtn" class="ghost" type="button">담은 것 <span id="cartn">0</span></button>
 </div>
 <script type="module">
-import { loadProfile, profileFromUrl, applyProfile, loadStore, viewItem, won, speak, channel, el, CODES, hasKoreanVoice } from "./js/common.js";
+import { loadProfile, profileFromUrl, applyProfile, loadStore, viewItem, allergyBox, won, speak, channel, el, CODES, hasKoreanVoice } from "./js/common.js";
 
 const qs = new URLSearchParams(location.search);
 const k = /^\d{4}$/.test(qs.get("k") || "") ? qs.get("k") : ""; // v0.3: 네 자리 숫자만
@@ -86,38 +86,39 @@ function stepsOf(v) {
   if (temp.length >= 2) steps.push({ kind: "one", title: "따뜻하게, 차갑게 중 하나를 고르세요", idx: temp });
   else if (temp.length === 1) steps.push({ kind: "info", title: `${v.options[temp[0]]}만 있어요`, idx: temp });
   v.rawOptions.forEach((o, i) => { if (!temp.includes(i)) steps.push({ kind: "yn", title: `${v.options[i]} — 이렇게 할까요?`, idx: [i] }); });
-  // v0.3(1차 모의 심사 E 재현 버그): 알레르기 정보가 있으면 한 가지씩 모드에서도 반드시 먼저 보여 주고 확인받는다(고를 것이 없는 메뉴 포함)
-  if (v.allergy) steps.unshift({ kind: "allergy", title: `알레르기 정보를 확인하세요 — ${v.allergy}`, idx: [] });
   return steps;
 }
 
 function item(v) {
   const steps = stepsOf(v);
   const pick = { temp: null, on: new Set() };
-  const head = [
-    el("div", { class: "card" },
-      el("div", { class: "row" }, el("b", { class: "grow" }, v.name), el("span", { class: "price" }, won(v.price))),
-      el("p", {}, v.desc),
-      el("span", { class: "tag " + (v.source === "AI 쉬운 말" ? "ai" : "orig") }, SOURCE_LABEL[v.source] || "매장 설명 그대로")),
-    v.allergy ? el("div", { class: "card allergy" }, el("b", {}, "알레르기 정보(매장 원문)"), el("div", {}, v.allergy))
-      : el("div", { class: "card allergy" }, el("b", {}, "알레르기 정보"), el("div", {}, "매장 자료에 알레르기 정보가 없어요. 걱정되면 「직원 부르기」로 물어보세요.")), // v0.3(A)
-  ];
+  const descCard = () => el("div", { class: "card" },
+    el("div", { class: "row" }, el("b", { class: "grow" }, v.name), el("span", { class: "price" }, won(v.price))),
+    el("p", {}, v.desc),
+    el("span", { class: "tag " + (v.source === "AI 쉬운 말" ? "ai" : "orig") }, SOURCE_LABEL[v.source] || "매장 설명 그대로"));
+  // 고르는 화면의 짧은 머리(이름·가격) — v0.4(2차 모의 심사 D): '모두 켜기'에서도 고르는 단추가 첫 화면 안에(글씨 > 단추 > 설명)
+  const miniHead = () => el("p", { class: "row" }, el("b", { class: "grow" }, v.name), el("span", { class: "price" }, won(v.price)));
   const onePerScreen = codes.has("ONE");
-  let si = 0;
+  // v0.4(2차 모의 심사 A·B·E 재현: 아포가토): 한 가지씩 모드는 메뉴마다 '설명·알레르기 확인' 화면을 반드시 먼저 거친다(고를 것이 없는 메뉴 포함)
+  let si = onePerScreen ? -1 : 0;
   function render() {
     if (onePerScreen) {
+      if (si < 0) {
+        return screen(`${v.name} — 설명과 알레르기를 확인하세요`, descCard(), allergyBox(v),
+          el("button", { type: "button", class: "block", onclick: () => { si = 0; render(); } }, steps.length ? "확인했어요 — 고르기 시작" : "확인했어요"),
+          el("button", { type: "button", class: "block ghost", onclick: () => list(v.category) }, "← 다른 메뉴"));
+      }
       if (si >= steps.length) return review();
       const s = steps[si];
-      screen(s.title, ...head, stepBox(s, true), el("button", { type: "button", class: "block ghost", onclick: () => (si > 0 ? (si--, render()) : list(v.category)) }, "← 뒤로"));
+      screen(s.title, miniHead(), stepBox(s, true), el("button", { type: "button", class: "block ghost", onclick: () => { si--; render(); } }, "← 뒤로"));
     } else {
-      screen(v.name, ...head, ...steps.filter((s) => s.kind !== "allergy").map((s) => el("div", { class: "card" }, el("b", {}, s.title), stepBox(s, false))),
+      screen(v.name, descCard(), allergyBox(v), ...steps.map((s) => el("div", { class: "card" }, el("b", {}, s.title), stepBox(s, false))),
         el("button", { type: "button", class: "block", onclick: add }, "담기"),
         el("button", { type: "button", class: "block ghost", onclick: () => list(v.category) }, "← 다른 메뉴"));
     }
   }
   function stepBox(s, advance) {
     const next = (key) => { if (advance) { si++; render(); } else { keepFocusKey = key || null; render(); } };
-    if (s.kind === "allergy") return el("button", { type: "button", class: "block", onclick: next }, "확인했어요");
     if (s.kind === "info") { if (advance) return el("button", { type: "button", class: "block", onclick: next }, "알겠어요"); return el("p", { class: "sub" }, "고를 것 없음"); }
     if (s.kind === "one") return el("div", { class: "choice" }, ...s.idx.map((i) =>
       el("button", { type: "button", "data-k": `one-${i}`, "aria-pressed": pick.temp === i ? "true" : "false", onclick: () => { pick.temp = i; next(`one-${i}`); } }, v.options[i])));
@@ -136,13 +137,15 @@ function item(v) {
   }
   function review() {
     screen("이대로 담을까요?", el("div", { class: "card" }, el("p", {}, label()), el("p", { class: "price" }, won(total()))),
-      v.allergy ? el("div", { class: "card allergy" }, el("b", {}, "알레르기 정보(매장 원문)"), el("div", {}, v.allergy)) : null,
+      allergyBox(v), // v0.4: 담기 직전에도 항상(정보가 없으면 '직원에게 확인')
       el("button", { type: "button", class: "block", onclick: add }, "담기"),
-      el("button", { type: "button", class: "block ghost", onclick: () => { si = 0; render(); } }, "처음부터 다시 고르기"));
+      el("button", { type: "button", class: "block ghost", onclick: () => { si = steps.length ? steps.length - 1 : -1; render(); } }, "← 뒤로"),
+      el("button", { type: "button", class: "block ghost", onclick: () => { si = -1; pick.temp = null; pick.on.clear(); render(); } }, "처음부터 다시 고르기"));
   }
   function add() {
     if (steps.some((s) => s.kind === "one") && pick.temp == null) { say("따뜻하게, 차갑게 중 하나를 골라 주세요"); alert("따뜻하게, 차갑게 중 하나를 골라 주세요."); return; }
-    cart.push({ label: label(), price: total() });
+    // v0.4(2차 모의 심사 B): 키오스크가 자기 가격표로 다시 계산하도록 메뉴 id·고른 옵션 번호도 함께 담는다
+    cart.push({ id: v.id, temp: pick.temp, on: [...pick.on], label: label(), price: total() });
     screen("담았어요", el("div", { class: "card" }, el("p", {}, label()), el("p", { class: "price" }, won(total()))),
       el("button", { type: "button", class: "block", onclick: confirmOrder }, "주문 확인하기"),
       el("button", { type: "button", class: "block ghost", onclick: home }, "더 고르기"));
@@ -164,9 +167,10 @@ function confirmOrder() {
 function pay(sum) {
   const no = "A-" + String(10 + Math.floor(Math.random() * 90));
   const lines = cart.map((c) => c.label);
+  const paid = cart.slice();
   cart.length = 0; // v0.3(1차 모의 심사 B 실측): 결제하면 바로 비워 같은 주문이 두 번 들어가지 않게
   document.getElementById("cartn").textContent = 0;
-  channel().postMessage({ type: "order", k, no, lines, total: sum });
+  channel().postMessage({ type: "order", k, no, lines, items: paid.map((c) => ({ id: c.id, temp: c.temp, on: c.on })), total: sum });
   screen(`주문했어요 — 번호 ${no}`,
     el("div", { class: "card" }, el("p", {}, "시연이라 실제 결제는 되지 않았어요."), el("p", {}, `합계 ${won(sum)}`)),
     el("p", { class: "sub small" }, "실제 서비스에서는 이 주문이 키오스크로 넘어가 결제됩니다(시제품은 같은 기기 시연 화면에서만 키오스크에 표시)."),
@@ -175,9 +179,22 @@ function pay(sum) {
 
 document.getElementById("staff").onclick = () => {
   channel().postMessage({ type: "staff", k });
-  screen("직원을 불렀어요", el("p", {}, "잠시만 기다려 주세요. (시연: 한 기기 시연 화면에서만 키오스크에 표시되고, 실제 호출은 되지 않아요)"), el("button", { type: "button", class: "block ghost", onclick: home }, "처음으로"));
+  // v0.4(2차 모의 심사 E): 하던 주문을 지우지 않고 화면 위에 알림만 띄운다
+  const old = document.getElementById("staffnote"); if (old) old.remove();
+  const note = el("div", { class: "card notice", id: "staffnote", role: "status" },
+    el("b", {}, "직원을 불렀어요"), el("p", {}, "잠시만 기다려 주세요. 하던 주문은 그대로 있어요. (시연: 한 기기 시연 화면에서만 키오스크에 표시되고, 실제 호출은 되지 않아요)"),
+    el("button", { type: "button", class: "ghost", onclick: () => note.remove() }, "알림 닫기"));
+  app.prepend(note);
+  document.getElementById("live").textContent = "직원을 불렀어요. 하던 주문은 그대로 있어요.";
+  say("직원을 불렀어요. 하던 주문은 그대로 있어요.");
 };
 document.getElementById("cartbtn").onclick = confirmOrder;
+// v0.4(2차 모의 심사 B·E 재현: 한 기기 시연의 방식 단추가 # 뒤만 바꿔 화면이 그대로이던 회귀) — 주소의 # 가 바뀌면 프로필을 다시 읽어 처음 화면으로
+window.addEventListener("hashchange", () => {
+  const p = profileFromUrl();
+  if (!p) return;
+  profile = p; codes = applyProfile(profile); firstScreen = true; home();
+});
 start();
 </script>
 </body>

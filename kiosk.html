@@ -78,7 +78,24 @@ channel().addEventListener("message", (ev) => {
   if (m.type !== "order" || !Array.isArray(m.lines)) return;
   modal.classList.remove("open");
   box.hidden = false;
-  box.replaceChildren(el("b", {}, `내 방식 주문이 도착했어요 — 주문 번호 ${m.no}`), el("div", {}, m.lines.join(" · ")), el("div", { class: "price" }, `합계 ${won(Number(m.total) || 0)}`));
+  // v0.4(2차 모의 심사 B 실측: 폰이 보낸 '합계 1원'을 그대로 표시) — 키오스크가 자기 가격표로 다시 계산하고, 폰 합계와 다르면 경고
+  const byId = Object.fromEntries(store.menu.items.map((i) => [i.id, i]));
+  const extraOf = (o) => { const x = String(o).match(/\+([\d,]+)원/); return x ? Number(x[1].replace(/,/g, "")) : 0; };
+  let mine = 0, bad = !Array.isArray(m.items) || !m.items.length;
+  for (const c of (m.items || [])) {
+    const it = byId[c && c.id];
+    if (!it) { bad = true; continue; }
+    mine += it.price;
+    for (const i of (Array.isArray(c.on) ? c.on : [])) { if (Number.isInteger(i) && it.options[i] != null) mine += extraOf(it.options[i]); else bad = true; }
+  }
+  const phoneTotal = Number(m.total) || 0;
+  const kids = [el("b", {}, `내 방식 주문이 도착했어요 — 주문 번호 ${m.no}`), el("div", {}, m.lines.join(" · "))];
+  if (bad) kids.push(el("div", { class: "price" }, "주문 내용을 키오스크 가격표와 맞춰 볼 수 없어요 — 직원 확인이 필요해요"));
+  else {
+    kids.push(el("div", { class: "price" }, `합계 ${won(mine)} (키오스크 가격표로 계산)`));
+    if (mine !== phoneTotal) kids.push(el("div", { class: "sub" }, `휴대폰이 보낸 합계(${won(phoneTotal)})와 달라요 — 키오스크 가격으로 결제합니다`));
+  }
+  box.replaceChildren(...kids);
 });
 </script>
 </body>

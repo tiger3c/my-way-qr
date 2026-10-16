@@ -1,12 +1,12 @@
 {
  "store_id": "hanmogeum",
  "made": "2026-10-17",
- "rules": "v0.3",
- "how": "운영자 화면과 같은 방식(모델은 설명 한 줄·옵션 풀이만 → 띄어쓰기·받침 어미 다듬기 → 규칙 검증 → 실패 시 1회 재생성 → 그래도 실패면 원문 유지)으로 Qwen2.5-1.5B-Instruct(q4_k_m)를 개발 PC의 CPU(llama.cpp)에서 돌려 만든 결과(모델 재실행 없이 v0.3 규칙으로 다시 판정). 운영자 화면의 브라우저 실행(WebLLM)은 WebGPU 기기용 기능으로, 아직 실행 기록이 없음",
+ "rules": "v0.4",
+ "how": "운영자 화면과 같은 방식(모델은 설명 한 줄·옵션 풀이만 → 띄어쓰기·받침 어미 다듬기 → 규칙 검증 → 실패 시 1회 재생성 → 그래도 실패면 원문 유지)으로 Qwen2.5-1.5B-Instruct(q4_k_m)를 개발 PC의 CPU(llama.cpp)에서 돌려 만든 결과(1일차 시험의 출력을 모델 재실행 없이 v0.4 규칙으로 다시 판정 — 재생성은 하지 않음). 운영자 화면의 브라우저 실행(WebLLM)은 WebGPU 기기용 기능으로, 아직 실행 기록이 없음",
  "model": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
  "summary": {
-  "ai": 16,
-  "original": 14
+  "ai": 13,
+  "original": 17
  },
  "rows": [
   {
@@ -16,7 +16,8 @@
    "easy_options": null,
    "tidy_notes": [],
    "rule_flags": [
-    "숫자 '500'"
+    "숫자 '500'",
+    "외래어 남음 '샷·에스프레소'"
    ],
    "tries": 2
   },
@@ -35,15 +36,13 @@
   },
   {
    "id": "c03",
-   "used": "AI",
-   "easy_desc": "바닐라 단맛 액을 넣은 달콤한 라떼예요.",
-   "easy_options": [
-    "따뜻하게",
-    "차갑게",
-    "시럽 덜 달게"
-   ],
+   "used": "원문 유지",
+   "easy_desc": null,
+   "easy_options": null,
    "tidy_notes": [],
-   "rule_flags": [],
+   "rule_flags": [
+    "외래어 남음 '시럽'"
+   ],
    "tries": 1
   },
   {
@@ -55,23 +54,20 @@
    "rule_flags": [
     "옵션 개수 3≠2",
     "설명 김",
-    "재료 빠짐 '카라멜'"
+    "재료 빠짐 '카라멜'",
+    "외래어 남음 '시럽'"
    ],
    "tries": 2
   },
   {
    "id": "c05",
-   "used": "AI",
-   "easy_desc": "초콜릿 소스와 진한 커피 원액, 데운 우유에 달콤한 크림을 올린 커피예요.",
-   "easy_options": [
-    "따뜻하게",
-    "차갑게",
-    "휘핑 크림 빼기"
+   "used": "원문 유지",
+   "easy_desc": null,
+   "easy_options": null,
+   "tidy_notes": [],
+   "rule_flags": [
+    "외래어 남음 '휘핑'"
    ],
-   "tidy_notes": [
-    "띄어쓰기"
-   ],
-   "rule_flags": [],
    "tries": 1
   },
   {
@@ -110,13 +106,13 @@
   },
   {
    "id": "c09",
-   "used": "AI",
-   "easy_desc": "진한 커피 위에 달콤한 크림을 올린 비엔나 스타일 커피예요.",
-   "easy_options": [
-    "차갑게"
-   ],
+   "used": "원문 유지",
+   "easy_desc": null,
+   "easy_options": null,
    "tidy_notes": [],
-   "rule_flags": [],
+   "rule_flags": [
+    "외래어 남음 '비엔나'"
+   ],
    "tries": 1
   },
   {
@@ -238,7 +234,8 @@
    "easy_options": null,
    "tidy_notes": [],
    "rule_flags": [
-    "설명 김"
+    "설명 김",
+    "외래어 남음 '휘핑'"
    ],
    "tries": 2
   },

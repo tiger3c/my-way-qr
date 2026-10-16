@@ -69,6 +69,9 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   display: flex; gap: var(--gap);
 }
 .callbar button { flex: 1; }
+/* v0.4(2차 모의 심사 A: 하단 바가 초점 받은 메뉴를 최대 61% 가림) — 초점이 옮겨 갈 때 하단 바 높이만큼 비워 두기 */
+html { scroll-padding-bottom: calc(var(--btn-h) * 1.5 + 40px); }
+#app :focus { scroll-margin-bottom: calc(var(--btn-h) * 1.5 + 40px); }
 table { border-collapse: collapse; width: 100%; font-size: 0.9em; }
 th, td { border-bottom: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }
 .toggle {

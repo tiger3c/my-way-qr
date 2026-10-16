@@ -94,7 +94,11 @@ export function substituteSafe(text, glossary) {
 // 화면에 보일 메뉴 한 개: 이름·가격·알레르기는 항상 원본 값. 설명·옵션 이름만 프로필(EASY)에 따라 바뀜
 export function viewItem(it, store, easyOn) {
   const e = store.easyById[it.id];
-  const allergy = (it.desc.match(/알레르기:\s*([^.]+)/) || [])[1] || null;
+  // 알레르기: 매장이 적은 '알레르기:'(원문) 또는 v0.4 메뉴 글의 재료 낱말로 정한 성분(allergy_derived, 매장 확인 필요). 둘 다 없으면 null
+  const declared = (it.desc.match(/알레르기:\s*([^.]+)/) || [])[1] || null;
+  const derived = Array.isArray(it.allergy_derived) ? it.allergy_derived : null;
+  const allergy = declared || (derived && derived.length ? derived.join(", ") : null);
+  const allergySource = declared ? "매장 원문" : (derived ? (derived.length ? "재료 낱말" : "낱말 없음") : "없음");
   let desc = it.desc, options = it.options.slice(), source = "원문";
   if (easyOn) {
     if (e && e.used === "AI" && e.easy_desc) {
@@ -110,7 +114,16 @@ export function viewItem(it, store, easyOn) {
   }
   // 옵션의 추가 금액은 원본에서 다시 읽는다(모델이 숫자를 쓰지 못하게 했으므로)
   const extra = it.options.map((o) => { const m = o.match(/\+([\d,]+)원/); return m ? Number(m[1].replace(/,/g, "")) : 0; });
-  return { id: it.id, name: it.name, category: it.category, price: it.price, desc, options, rawOptions: it.options, extra, allergy, source };
+  return { id: it.id, name: it.name, category: it.category, price: it.price, desc, options, rawOptions: it.options, extra, allergy, allergySource, source };
+}
+
+// v0.4: 알레르기 안내 상자 — 모든 모드·모든 단계에서 같은 문구(2차 모의 심사 D·E)
+export function allergyBox(v) {
+  if (v.allergySource === "매장 원문") return el("div", { class: "card allergy" }, el("b", {}, "알레르기 정보(매장 원문)"), el("div", {}, v.allergy));
+  if (v.allergySource === "재료 낱말") return el("div", { class: "card allergy" }, el("b", {}, "알레르기 유발 성분"), el("div", {}, v.allergy),
+    el("div", { class: "sub small" }, "메뉴 설명에 적힌 재료로 표시했어요. 소스·시럽 성분은 매장에 확인하세요."));
+  return el("div", { class: "card allergy" }, el("b", {}, "알레르기 정보"),
+    el("div", {}, "메뉴 설명에 알레르기 유발 성분이 적혀 있지 않아요. 걱정되면 「직원 부르기」로 물어보세요."));
 }
 
 export const won = (n) => n.toLocaleString("ko-KR") + "원";
