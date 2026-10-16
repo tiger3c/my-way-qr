@@ -35,7 +35,7 @@
 </main>
 <script type="module">
 import { loadStore, el } from "./js/common.js";
-import { checkEasy, SYSTEM, EX_IN, EX_OUT, SCHEMA, hints } from "./js/rules.js";
+import { checkEasy, tidy, SYSTEM, EX_IN, EX_OUT, SCHEMA, hints } from "./js/rules.js";
 const store = await loadStore();
 const items = store.menu.items;
 const result = Object.fromEntries(store.easy.rows.map((r) => [r.id, { ...r }]));
@@ -85,14 +85,14 @@ document.getElementById("run").onclick = async () => {
             { role: "user", content: JSON.stringify(EX_IN) + "\n바꿔 쓸 말(꼭 이렇게): 파우더=가루, 스팀 밀크=데운 우유, 휘핑=달콤한 크림, HOT=따뜻하게, ICE=차갑게" },
             { role: "assistant", content: JSON.stringify(EX_OUT) }, { role: "user", content: user }],
           response_format: { type: "json_object", schema: JSON.stringify(SCHEMA) }, temperature: 0.2 + 0.3 * t, max_tokens: 200 });
-        try { out = JSON.parse(r.choices[0].message.content); flags = checkEasy(it, out); } catch (e) { out = {}; flags = ["JSON 오류"]; }
+        try { out = JSON.parse(r.choices[0].message.content); out.easy_desc = tidy(String(out.easy_desc || "")).text; flags = checkEasy(it, out); } catch (e) { out = {}; flags = ["JSON 오류"]; }
         if (!flags.length) break;
       }
       const used = flags.length ? "원문 유지" : "AI";
       result[it.id] = { id: it.id, used, easy_desc: used === "AI" ? out.easy_desc : null, easy_options: used === "AI" ? out.options : null, rule_flags: flags, tries };
       rows.push(result[it.id]); drawTable();
     }
-    made = { store_id: store.menu.store_id, made: new Date().toISOString().slice(0, 10), how: "운영자 화면(WebLLM Qwen2.5-1.5B-Instruct-q4f16_1-MLC) → 규칙 검증 → 1회 재생성 → 실패면 원문 유지",
+    made = { store_id: store.menu.store_id, made: new Date().toISOString().slice(0, 10), how: "운영자 화면(WebLLM Qwen2.5-1.5B-Instruct-q4f16_1-MLC) → 띄어쓰기·어미 다듬기 → 규칙 검증(v0.2) → 1회 재생성 → 실패면 원문 유지",
       model: "Qwen2.5-1.5B-Instruct-q4f16_1-MLC", summary: { ai: rows.filter((r) => r.used === "AI").length, original: rows.filter((r) => r.used !== "AI").length }, rows };
     prog.textContent = `끝 — AI ${made.summary.ai}개 / 원문 유지 ${made.summary.original}개. 확인 뒤 내려받아 매장 자료로 저장하세요.`;
     document.getElementById("dl").disabled = false;
@@ -118,7 +118,7 @@ pick.onchange = loadTry; loadTry();
 document.getElementById("tryBtn").onclick = () => {
   const it = items.find((i) => i.id === pick.value);
   const opts = document.getElementById("tryOpts").value.split(",").map((s) => s.trim()).filter(Boolean);
-  const flags = checkEasy(it, { id: it.id, easy_desc: document.getElementById("tryDesc").value.trim(), options: opts });
+  const flags = checkEasy(it, { id: it.id, easy_desc: tidy(document.getElementById("tryDesc").value.trim()).text, options: opts });
   const out = document.getElementById("tryOut");
   out.replaceChildren(flags.length ? el("div", { class: "card allergy" }, el("b", {}, "걸린 규칙 → 이 글은 손님에게 보이지 않고 원문이 나갑니다"), el("ul", {}, ...flags.map((f) => el("li", {}, f))))
     : el("div", { class: "card" }, el("b", {}, "통과 → 이 쉬운 말이 손님 화면에 나갑니다")));

@@ -1,4 +1,4 @@
-// 쉬운 말 변환 결과 규칙 검증 — 1일차 시험(2026-10-17) Python 규칙(run_test.py·run_test2.py·run_test3.py·recheck3.py)을 그대로 옮김.
+// 쉬운 말 변환 결과 규칙 검증 — 1일차 시험(2026-10-17) Python 규칙(run_test.py·run_test2.py·run_test3.py·recheck3.py·rules_v02.py)을 그대로 옮김.
 // 걸리면 재생성 1회 → 그래도 걸리면 원문 유지(틀린 쉬운 말이 화면에 나가지 않게 하는 안전 기본값)
 const CONCEPTS = {
   "우유": /우유|밀크(?!티)|밀크티/, "귀리": /오트|귀리/, "초콜릿": /초콜릿|초코|코코아/, "바닐라": /바닐라/,
@@ -73,7 +73,31 @@ export function checkEasy(it, out) {
     if (re.test(src) && !re.test(desc) && !new RegExp(`(${re.source})[가-힣]* ?없`).test(src)) flags.push(`재료 빠짐 '${c}'`);
   }
   for (const m of desc.matchAll(PROCESS)) if (!src.includes(m[0])) flags.push(`조리법 지어냄 '${m[0]}'`);
+  // v0.2(2026-10-17, Python rules_v02.extra_v02와 같음): 부사+예요 비문 · 원문의 부정 정보('커피 없음') 빠짐 · 사전 말이 명사 뒤에 붙음
+  const adv = desc.match(/(게|게만|지만|고) ?(예요|이에요)/);
+  if (adv) flags.push(`어미 비문 '${adv[0]}'`);
+  for (const m of src.matchAll(/([가-힣]+?)(이|가)? 없(음|는|이)/g)) {
+    const noun = m[1].replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (!new RegExp(noun + "[가-힣]* ?(이 |가 )?없").test(text)) flags.push(`빠진 부정 정보 '${m[1]} 없음'`);
+  }
+  if (GLUE.test(text)) flags.push("사전 말이 명사 뒤에 붙음");
   return flags;
+}
+
+export const GLUE = /[가-힣]+ (곱게 간 과일|곱게 으깬 것)/;
+const batchim = (ch) => { const o = ch.charCodeAt(0) - 0xac00; return o >= 0 && o < 11172 && o % 28 !== 0; };
+// AI 설명의 띄어쓰기·받침에 맞는 '이에요/예요' — 기계적 다듬기(뜻 그대로). checkEasy 전에 부른다(Python rules_v02.tidy와 같음)
+export function tidy(desc) {
+  const notes = [];
+  const d2 = desc.replace(/([가-힣]) (예요|이에요)(?=[.!?]|$)/g, "$1$2");
+  if (d2 !== desc) notes.push("띄어쓰기");
+  const d3 = d2.replace(/([가-힣])(예요|이에요)/g, (m, ch, cop) => {
+    if (batchim(ch) && cop === "예요") return ch + "이에요";
+    if (!batchim(ch) && cop === "이에요") return ch + "예요";
+    return m;
+  });
+  if (d3 !== d2) notes.push("받침에 맞는 어미");
+  return { text: d3, notes };
 }
 
 export const SYSTEM = [

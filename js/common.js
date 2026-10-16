@@ -56,13 +56,37 @@ export async function loadStore() {
   return { menu, easy, easyById, glossary: gloss.terms };
 }
 
-// 사전 치환(검수된 짧은 말만) — 원문 유지 항목의 옵션 이름 등에 쓴다. 긴 말부터 바꾼다(바닐라빈 시럽 > 시럽)
+// 사전 치환(검수된 짧은 말만) — 원문 유지 항목의 설명·옵션에 쓴다. v0.2(2026-10-17, Python rules_v02와 같음):
+// ① 숫자+단위·어순 규칙을 먼저(「에스프레소 2샷」 → 「진한 커피 원액 2번」) ② 묶음 말 ③ 사전(긴 말부터)
+// ④ 치환 뒤 깨진 모양(숫자 바로 뒤 사전 말·같은 말 연달아·명사 뒤에 붙은 사전 말)이면 치환을 버리고 매장 원문 그대로
+const NUM_RULES = [
+  [/에스프레소 (\d+)샷/g, "진한 커피 원액 $1번"],
+  [/원액 (\d+)샷/g, "원액 $1번"],
+  [/(\d+)샷/g, "커피 원액 $1번"],
+  [/((?:[가-힣]+ )?[가-힣]+) 페이스트(?!리)/g, "곱게 으깬 $1"],
+  [/((?:[가-힣]+ )?[가-힣]+) 퓨레/g, "곱게 간 $1"],
+];
+const EXTRA_TERMS = { "콜드브루 원액": "커피 원액", "카라멜 드리즐": "가늘게 뿌린 카라멜 소스" };
+const esc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 export function substitute(text, glossary) {
   let out = text;
-  for (const k of Object.keys(glossary).sort((a, b) => b.length - a.length)) {
-    out = out.split(k).join(glossary[k]);
-  }
+  for (const [re, rep] of NUM_RULES) out = out.replace(re, rep);
+  const terms = { ...glossary, ...EXTRA_TERMS };
+  for (const k of Object.keys(terms).sort((a, b) => b.length - a.length)) out = out.split(k).join(terms[k]);
   return out;
+}
+export function broken(text, glossary) {
+  const vals = [...new Set([...Object.values(glossary), ...Object.values(EXTRA_TERMS)])].sort((a, b) => b.length - a.length);
+  const why = [];
+  if (new RegExp("\\d(" + vals.map(esc).join("|") + ")").test(text)) why.push("숫자 바로 뒤 사전 말");
+  if (/(?<![가-힣])([가-힣]{2,}(?: [가-힣]{2,})?) \1(?![가-힣])/.test(text)) why.push("같은 말 연달아");
+  if (/[가-힣]+ (곱게 간 과일|곱게 으깬 것)/.test(text)) why.push("명사 뒤에 붙은 사전 말");
+  return why;
+}
+export function substituteSafe(text, glossary) {
+  const s = substitute(text, glossary);
+  const why = broken(s, glossary);
+  return why.length ? { text, src: "원문", why } : { text: s, src: "사전 치환", why: [] };
 }
 
 // 화면에 보일 메뉴 한 개: 이름·가격·알레르기는 항상 원본 값. 설명·옵션 이름만 프로필(EASY)에 따라 바뀜
@@ -73,12 +97,13 @@ export function viewItem(it, store, easyOn) {
   if (easyOn) {
     if (e && e.used === "AI" && e.easy_desc) {
       desc = e.easy_desc;
-      options = (e.easy_options && e.easy_options.length === it.options.length) ? e.easy_options.slice() : it.options.map((o) => substitute(o, store.glossary));
+      options = (e.easy_options && e.easy_options.length === it.options.length) ? e.easy_options.slice() : it.options.map((o) => substituteSafe(o, store.glossary).text);
       source = "AI 쉬운 말";
     } else {
-      desc = substitute(it.desc.replace(/알레르기:[^.]*\.?/, "").trim(), store.glossary);
-      options = it.options.map((o) => substitute(o, store.glossary));
-      source = "사전 치환(원문 유지)";
+      const r = substituteSafe(it.desc.replace(/알레르기:[^.]*\.?/, "").trim(), store.glossary);
+      desc = r.text;
+      options = it.options.map((o) => substituteSafe(o, store.glossary).text);
+      source = r.src === "원문" ? "매장 원문(쉬운 말 실패)" : "사전 치환(원문 유지)";
     }
   }
   // 옵션의 추가 금액은 원본에서 다시 읽는다(모델이 숫자를 쓰지 못하게 했으므로)
