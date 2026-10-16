@@ -14,7 +14,7 @@
   <button id="cartbtn" class="ghost" type="button">담은 것 <span id="cartn">0</span></button>
 </div>
 <script type="module">
-import { loadProfile, profileFromUrl, applyProfile, loadStore, viewItem, won, speak, channel, el, CODES } from "./js/common.js";
+import { loadProfile, profileFromUrl, applyProfile, loadStore, viewItem, won, speak, channel, el, CODES, hasKoreanVoice } from "./js/common.js";
 
 const qs = new URLSearchParams(location.search);
 const k = /^\d{4}$/.test(qs.get("k") || "") ? qs.get("k") : ""; // v0.3: 네 자리 숫자만
@@ -24,6 +24,7 @@ const store = await loadStore();
 const cart = [];
 let codes = applyProfile(profile);
 let firstScreen = true;
+let keepFocusKey = null; // v0.3(A): 한 화면 모드에서 고른 뒤 다시 그릴 때 포커스를 누른 단추에 그대로
 // 손님에게 보이는 출처 표시(개발 용어 대신 — 1차 모의 심사 E)
 const SOURCE_LABEL = { "AI 쉬운 말": "쉬운 말 설명", "사전 치환(원문 유지)": "쉬운 낱말로 바꾼 매장 설명", "매장 원문(쉬운 말 실패)": "매장 설명 그대로", "원문": "매장 설명 그대로" };
 
@@ -33,6 +34,12 @@ function screen(title, ...body) {
   // v0.3(1차 모의 심사 A): 단계마다 제목(h1), 바뀐 안내는 aria-live 한 줄로만, 첫 화면은 포커스를 옮기지 않음(시연 화면 안에서 쪽이 저절로 내려가지 않게)
   app.replaceChildren(el("div", { class: "row" }, el("h1", { class: "step-title grow", tabindex: "-1" }, title), readBtn), ...body.filter(Boolean));
   document.getElementById("live").textContent = title;
+  // v0.3(A): 읽어 주기를 켰는데 이 기기에 한국어 음성이 없으면 알림
+  if (codes.has("VOICE") && hasKoreanVoice() === false) app.prepend(el("div", { class: "card notice", role: "status" }, "이 휴대폰에서는 읽어 주기를 할 수 없어요. 어려우면 아래 「직원 부르기」를 누르세요."));
+  if (keepFocusKey) {
+    const b = app.querySelector(`[data-k="${keepFocusKey}"]`); keepFocusKey = null;
+    if (b) { b.focus({ preventScroll: true }); firstScreen = false; say(title); return; }
+  }
   if (!firstScreen) {
     window.scrollTo(0, 0);
     const h = app.querySelector("h1"); if (h) h.focus({ preventScroll: true });
@@ -92,7 +99,8 @@ function item(v) {
       el("div", { class: "row" }, el("b", { class: "grow" }, v.name), el("span", { class: "price" }, won(v.price))),
       el("p", {}, v.desc),
       el("span", { class: "tag " + (v.source === "AI 쉬운 말" ? "ai" : "orig") }, SOURCE_LABEL[v.source] || "매장 설명 그대로")),
-    v.allergy ? el("div", { class: "card allergy" }, el("b", {}, "알레르기 정보(매장 원문)"), el("div", {}, v.allergy)) : null,
+    v.allergy ? el("div", { class: "card allergy" }, el("b", {}, "알레르기 정보(매장 원문)"), el("div", {}, v.allergy))
+      : el("div", { class: "card allergy" }, el("b", {}, "알레르기 정보"), el("div", {}, "매장 자료에 알레르기 정보가 없어요. 걱정되면 「직원 부르기」로 물어보세요.")), // v0.3(A)
   ];
   const onePerScreen = codes.has("ONE");
   let si = 0;
@@ -108,16 +116,16 @@ function item(v) {
     }
   }
   function stepBox(s, advance) {
-    const next = () => { if (advance) { si++; render(); } else render(); };
+    const next = (key) => { if (advance) { si++; render(); } else { keepFocusKey = key || null; render(); } };
     if (s.kind === "allergy") return el("button", { type: "button", class: "block", onclick: next }, "확인했어요");
     if (s.kind === "info") { if (advance) return el("button", { type: "button", class: "block", onclick: next }, "알겠어요"); return el("p", { class: "sub" }, "고를 것 없음"); }
     if (s.kind === "one") return el("div", { class: "choice" }, ...s.idx.map((i) =>
-      el("button", { type: "button", "aria-pressed": pick.temp === i ? "true" : "false", onclick: () => { pick.temp = i; next(); } }, v.options[i])));
+      el("button", { type: "button", "data-k": `one-${i}`, "aria-pressed": pick.temp === i ? "true" : "false", onclick: () => { pick.temp = i; next(`one-${i}`); } }, v.options[i])));
     const i = s.idx[0];
     const extra = v.extra[i] ? ` (+${won(v.extra[i])})` : "";
     return el("div", { class: "choice" },
-      el("button", { type: "button", "aria-pressed": pick.on.has(i) ? "true" : "false", onclick: () => { pick.on.add(i); next(); } }, `네${extra}`),
-      el("button", { type: "button", "aria-pressed": !pick.on.has(i) ? "true" : "false", onclick: () => { pick.on.delete(i); next(); } }, "아니요"));
+      el("button", { type: "button", "data-k": `yes-${i}`, "aria-pressed": pick.on.has(i) ? "true" : "false", onclick: () => { pick.on.add(i); next(`yes-${i}`); } }, `네${extra}`),
+      el("button", { type: "button", "data-k": `no-${i}`, "aria-pressed": !pick.on.has(i) ? "true" : "false", onclick: () => { pick.on.delete(i); next(`no-${i}`); } }, "아니요"));
   }
   function total() { return v.price + [...pick.on].reduce((s, i) => s + v.extra[i], 0); }
   function label() {

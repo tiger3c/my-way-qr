@@ -4,7 +4,7 @@ export const CODES = {
   BIG: { label: "큰 글씨", hint: "글씨를 크게 봅니다" },
   HC: { label: "또렷한 색(고대비)", hint: "검은 바탕에 밝은 글씨" },
   EASY: { label: "쉬운 말", hint: "어려운 외래어·약어를 쉬운 말로 봅니다" },
-  VOICE: { label: "읽어 주기(천천히)", hint: "화면 글을 천천히 읽어 줍니다" },
+  VOICE: { label: "읽어 주기(천천히)", hint: "화면 글을 천천히 읽어 줍니다(화면 읽기 프로그램을 쓰면 끄세요)" },
   TOUCH: { label: "큰 버튼", hint: "누르는 곳을 크게 합니다" },
   ONE: { label: "한 화면에 한 가지씩", hint: "고를 것을 하나씩 차례로 묻습니다" },
 };
@@ -24,9 +24,10 @@ export function saveProfile(codes) {
 }
 export function clearProfile() { try { localStorage.removeItem(KEY); } catch (e) { /* 무시 */ } }
 
-// URL로 넘어온 프로필(한 기기 시연용, 예: ?p=BIG.EASY) — 저장소보다 우선
+// URL로 넘어온 프로필(한 기기 시연용, 예: #p=BIG.EASY) — 저장소보다 우선.
+// v0.3: 시연은 주소의 # 뒤(서버로 가지 않는 부분)에 붙인다(1차 모의 심사 A). 예전 ?p= 도 읽음
 export function profileFromUrl() {
-  const p = new URLSearchParams(location.search).get("p");
+  const p = new URLSearchParams(location.hash.slice(1)).get("p") || new URLSearchParams(location.search).get("p");
   if (!p) return null;
   return { codes: p.split(".").filter((c) => c in CODES), saved: "url" };
 }
@@ -115,6 +116,15 @@ export function viewItem(it, store, easyOn) {
 export const won = (n) => n.toLocaleString("ko-KR") + "원";
 
 // 읽어 주기(브라우저 내장 음성). 한국어 음성이 없는 기기도 있어 실패해도 화면은 그대로
+// 이 기기에 한국어 음성이 있는지(목록을 아직 못 받았으면 null)
+export function hasKoreanVoice() {
+  try {
+    if (!("speechSynthesis" in window)) return false;
+    const v = window.speechSynthesis.getVoices();
+    if (!v.length) return null;
+    return v.some((x) => (x.lang || "").toLowerCase().startsWith("ko"));
+  } catch (e) { return false; }
+}
 export function speak(text, slow = true) {
   try {
     if (!("speechSynthesis" in window)) return false;

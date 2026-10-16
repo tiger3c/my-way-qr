@@ -53,11 +53,13 @@ const modal = document.getElementById("modal");
 document.getElementById("myway").onclick = () => {
   const q = qrcode(0, "M"); q.addData(url); q.make();
   document.getElementById("qr").innerHTML = q.createSvgTag({ cellSize: 6, margin: 2, scalable: true });
+  const svg = document.querySelector("#qr svg"); if (svg) { svg.setAttribute("role", "img"); svg.setAttribute("aria-label", `내 방식 주문 QR, 키오스크 번호 ${k}`); }
   document.getElementById("kcode").textContent = k;
   document.getElementById("qrlink").href = url;
   modal.classList.add("open"); document.getElementById("close").focus();
 };
-document.getElementById("close").onclick = () => modal.classList.remove("open");
+document.getElementById("close").onclick = () => { modal.classList.remove("open"); document.getElementById("myway").focus(); };
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && modal.classList.contains("open")) document.getElementById("close").click(); }); // v0.3(A): Esc로 닫고 초점 되돌리기
 // v0.3(1차 모의 심사 A): 시각장애 사용자를 위한 소리 안내 — 키오스크 번호를 한 자리씩 읽어 줌(브라우저 내장 음성, 기기에 한국어 음성이 없으면 소리가 나지 않을 수 있음)
 const digits = () => k.split("").join(", ");
 const guide = () => `내 방식으로 주문하려면, 휴대폰의 내 방식 큐알 화면에서 키오스크 번호 ${digits()}를 넣으세요. 다시 듣기는 같은 단추를 누르세요.`;

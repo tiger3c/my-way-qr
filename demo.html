@@ -31,7 +31,7 @@ const PRESETS = [
 ];
 const phone = document.getElementById("phone");
 function go(p, btn) {
-  phone.src = `order.html?store=hanmogeum&k=${k}&p=${p || "NONE"}`;
+  phone.src = `order.html?store=hanmogeum&k=${k}#p=${p || "NONE"}`; // v0.3: 기능 코드는 # 뒤(서버로 가지 않음)
   document.querySelectorAll("#presets button").forEach((b) => b.classList.toggle("ghost", b !== btn));
 }
 const box = document.getElementById("presets");
