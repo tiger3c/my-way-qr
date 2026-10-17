@@ -101,12 +101,17 @@ function item(v) {
   const onePerScreen = codes.has("ONE");
   // v0.4(2차 모의 심사 A·B·E 재현: 아포가토): 한 가지씩 모드는 메뉴마다 '설명·알레르기 확인' 화면을 반드시 먼저 거친다(고를 것이 없는 메뉴 포함)
   let si = onePerScreen ? -1 : 0;
+  // v0.5.1: 읽어 주기를 켜면 제목만이 아니라 알레르기 문장까지 소리로 읽는다(speak가 앞 낭독을 끊으므로 제목 대신 이 문장)
+  const sayAllergy = () => say(`${v.name}. ${allergyLine(v)}`);
   function render() {
+    const again = keepFocusKey != null; // 일반 모드에서 옵션을 눌러 다시 그릴 때는 알레르기를 되풀이해 읽지 않음
     if (onePerScreen) {
       if (si < 0) {
-        return screen(`${v.name} — 설명과 알레르기를 확인하세요`, descCard(), allergyBox(v),
+        screen(`${v.name} — 설명과 알레르기를 확인하세요`, descCard(), allergyBox(v),
           el("button", { type: "button", class: "block", onclick: () => { si = 0; render(); } }, steps.length ? "확인했어요 — 고르기 시작" : "확인했어요"),
           el("button", { type: "button", class: "block ghost", onclick: () => list(v.category) }, "← 다른 메뉴"));
+        sayAllergy();
+        return;
       }
       if (si >= steps.length) return review();
       const s = steps[si];
@@ -115,6 +120,7 @@ function item(v) {
       screen(v.name, descCard(), allergyBox(v), ...steps.map((s) => el("div", { class: "card" }, el("b", {}, s.title), stepBox(s, false))),
         el("button", { type: "button", class: "block", onclick: add }, "담기"),
         el("button", { type: "button", class: "block ghost", onclick: () => list(v.category) }, "← 다른 메뉴"));
+      if (!again) sayAllergy();
     }
   }
   function stepBox(s, advance) {
@@ -141,6 +147,7 @@ function item(v) {
       el("button", { type: "button", class: "block", onclick: add }, "담기"),
       el("button", { type: "button", class: "block ghost", onclick: () => { si = steps.length ? steps.length - 1 : -1; render(); } }, "← 뒤로"),
       el("button", { type: "button", class: "block ghost", onclick: () => { si = -1; pick.temp = null; pick.on.clear(); render(); } }, "처음부터 다시 고르기"));
+    say(`이대로 담을까요? ${v.name}. ${allergyLine(v)}`); // v0.5.1: 담기 직전에도 알레르기 문장까지 읽음
   }
   function add() {
     if (steps.some((s) => s.kind === "one") && pick.temp == null) { say("따뜻하게, 차갑게 중 하나를 골라 주세요"); alert("따뜻하게, 차갑게 중 하나를 골라 주세요."); return; }
@@ -166,6 +173,8 @@ function confirmOrder() {
       el("p", { class: "price", style: "font-size:1.3em" }, `합계 ${won(sum)}`)),
     el("button", { type: "button", class: "block", onclick: () => pay(sum) }, "결제하기(시연)"),
     el("button", { type: "button", class: "block ghost", onclick: home }, "더 고르기"));
+  // v0.5.1: 읽어 주기 — 결제 전 확인은 품목마다 알레르기 문장까지 읽음
+  say("결제 전에 확인하세요. " + cart.map((c) => `${c.label}. ${allergyLine(viewItem(byId[c.id], store, codes.has("EASY")))}`).join(" "));
 }
 
 function pay(sum) {
