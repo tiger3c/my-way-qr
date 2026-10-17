@@ -107,3 +107,8 @@ th, td { border-bottom: 1px solid var(--line); padding: 6px 8px; text-align: lef
 
 /* v0.3: 화면 읽기 프로그램에만 들리는 안내 한 줄(aria-live는 여기만) */
 .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+/* v0.5(3차 모의 심사 P0·P1) — 결제 전 확인의 품목별 알레르기 한 줄 · 직원 호출 알림은 화면 위에 고정 */
+.cartline { padding: 6px 0; border-bottom: 1px solid var(--line); }
+.cartline:last-of-type { border-bottom: 0; }
+.allergy-line { border-left: 4px solid var(--danger); padding-left: 8px; font-size: 0.9em; margin-top: 4px; }
+.staffnote { position: fixed; top: 8px; left: 8px; right: 8px; max-width: 720px; margin: 0 auto; z-index: 20; background: var(--surface); box-shadow: 0 4px 16px rgba(0,0,0,0.25); }

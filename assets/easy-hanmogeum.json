@@ -1,12 +1,13 @@
 {
  "store_id": "hanmogeum",
  "made": "2026-10-17",
- "rules": "v0.4",
- "how": "운영자 화면과 같은 방식(모델은 설명 한 줄·옵션 풀이만 → 띄어쓰기·받침 어미 다듬기 → 규칙 검증 → 실패 시 1회 재생성 → 그래도 실패면 원문 유지)으로 Qwen2.5-1.5B-Instruct(q4_k_m)를 개발 PC의 CPU(llama.cpp)에서 돌려 만든 결과(1일차 시험의 출력을 모델 재실행 없이 v0.4 규칙으로 다시 판정 — 재생성은 하지 않음). 운영자 화면의 브라우저 실행(WebLLM)은 WebGPU 기기용 기능으로, 아직 실행 기록이 없음",
+ "rules": "v0.5",
+ "how": "운영자 화면과 같은 방식(모델은 설명 한 줄·옵션 풀이만 → 띄어쓰기·받침 어미 다듬기 → 규칙 검증 → 실패 시 1회 재생성 → 그래도 실패면 원문 유지)으로 Qwen2.5-1.5B-Instruct(q4_k_m)를 개발 PC의 CPU(llama.cpp)에서 돌려 만든 결과(1일차 시험의 출력을 모델 재실행 없이 v0.5 규칙으로 다시 판정 — 재생성은 하지 않음). 운영자 화면의 브라우저 실행(WebLLM)은 WebGPU 기기용 기능으로, 아직 실행 기록이 없음",
+ "review_note": "실제 운영에서는 AI 변환을 '승인 대기'로 저장하고 운영자가 원문과 나란히 보고 승인한 것만 손님 화면에 낸다(운영자 화면). 이 시연 저장본의 AI 변환은 사람이 승인하지 않은 '시연용 — 사람 승인 없음'이다",
  "model": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
  "summary": {
-  "ai": 13,
-  "original": 17
+  "ai": 15,
+  "original": 15
  },
  "rows": [
   {
@@ -17,9 +18,12 @@
    "tidy_notes": [],
    "rule_flags": [
     "숫자 '500'",
-    "외래어 남음 '샷·에스프레소'"
+    "외래어 남음 '샷·에스프레소'",
+    "옵션 문구가 정해진 말과 다름 '샷 추가 +500원'→'샷 추가 +500원'",
+    "수량이 원문과 다름 '한 번'"
    ],
-   "tries": 2
+   "tries": 2,
+   "review": null
   },
   {
    "id": "c02",
@@ -32,7 +36,8 @@
    ],
    "tidy_notes": [],
    "rule_flags": [],
-   "tries": 1
+   "tries": 1,
+   "review": "시연용 — 사람 승인 없음"
   },
   {
    "id": "c03",
@@ -41,9 +46,12 @@
    "easy_options": null,
    "tidy_notes": [],
    "rule_flags": [
-    "외래어 남음 '시럽'"
+    "외래어 남음 '시럽'",
+    "옵션 문구가 정해진 말과 다름 '시럽 덜 달게'→'시럽 덜 달게'",
+    "원문 재료 빠짐 '우유'"
    ],
-   "tries": 1
+   "tries": 1,
+   "review": null
   },
   {
    "id": "c04",
@@ -55,9 +63,13 @@
     "옵션 개수 3≠2",
     "설명 김",
     "재료 빠짐 '카라멜'",
-    "외래어 남음 '시럽'"
+    "외래어 남음 '시럽'",
+    "원문에 없는 말 '덮'",
+    "원문 재료 빠짐 '카라멜'",
+    "주장어 '양 주장' '늘'"
    ],
-   "tries": 2
+   "tries": 2,
+   "review": null
   },
   {
    "id": "c05",
@@ -66,9 +78,11 @@
    "easy_options": null,
    "tidy_notes": [],
    "rule_flags": [
-    "외래어 남음 '휘핑'"
+    "외래어 남음 '휘핑'",
+    "옵션 문구가 정해진 말과 다름 '휘핑 빼기'→'휘핑 크림 빼기'"
    ],
-   "tries": 1
+   "tries": 1,
+   "review": null
   },
   {
    "id": "c06",
@@ -79,7 +93,8 @@
    "rule_flags": [
     "어미 비문 '게만이에요'"
    ],
-   "tries": 1
+   "tries": 1,
+   "review": null
   },
   {
    "id": "c07",
@@ -90,7 +105,8 @@
    "rule_flags": [
     "빠진 정보 '카페인'"
    ],
-   "tries": 1
+   "tries": 1,
+   "review": null
   },
   {
    "id": "c08",
@@ -100,9 +116,11 @@
    "tidy_notes": [],
    "rule_flags": [
     "옵션 개수 2≠1",
-    "설명이 명령문"
+    "설명이 명령문",
+    "원문에 없는 말 '내려주세'"
    ],
-   "tries": 2
+   "tries": 2,
+   "review": null
   },
   {
    "id": "c09",
@@ -111,9 +129,10 @@
    "easy_options": null,
    "tidy_notes": [],
    "rule_flags": [
-    "외래어 남음 '비엔나'"
+    "외래어 남음 '비엔나·스타일'"
    ],
-   "tries": 1
+   "tries": 1,
+   "review": null
   },
   {
    "id": "c10",
@@ -122,7 +141,8 @@
    "easy_options": [],
    "tidy_notes": [],
    "rule_flags": [],
-   "tries": 1
+   "tries": 1,
+   "review": "시연용 — 사람 승인 없음"
   },
   {
    "id": "t01",
@@ -134,7 +154,8 @@
    ],
    "tidy_notes": [],
    "rule_flags": [],
-   "tries": 1
+   "tries": 1,
+   "review": "시연용 — 사람 승인 없음"
   },
   {
    "id": "t02",
@@ -145,7 +166,8 @@
    ],
    "tidy_notes": [],
    "rule_flags": [],
-   "tries": 1
+   "tries": 1,
+   "review": "시연용 — 사람 승인 없음"
   },
   {
    "id": "t03",
@@ -157,7 +179,8 @@
    ],
    "tidy_notes": [],
    "rule_flags": [],
-   "tries": 1
+   "tries": 1,
+   "review": "시연용 — 사람 승인 없음"
   },
   {
    "id": "t04",
@@ -166,9 +189,11 @@
    "easy_options": null,
    "tidy_notes": [],
    "rule_flags": [
-    "재료 빠짐 '녹차'"
+    "재료 빠짐 '녹차'",
+    "원문 재료 빠짐 '말차'"
    ],
-   "tries": 1
+   "tries": 1,
+   "review": null
   },
   {
    "id": "t05",
@@ -180,7 +205,8 @@
    ],
    "tidy_notes": [],
    "rule_flags": [],
-   "tries": 1
+   "tries": 1,
+   "review": "시연용 — 사람 승인 없음"
   },
   {
    "id": "n01",
@@ -192,7 +218,8 @@
    ],
    "tidy_notes": [],
    "rule_flags": [],
-   "tries": 1
+   "tries": 1,
+   "review": "시연용 — 사람 승인 없음"
   },
   {
    "id": "n02",
@@ -201,9 +228,11 @@
    "easy_options": null,
    "tidy_notes": [],
    "rule_flags": [
-    "조리법 지어냄 '증발'"
+    "조리법 지어냄 '증발'",
+    "원문에 없는 말 '증발시켜'"
    ],
-   "tries": 1
+   "tries": 1,
+   "review": null
   },
   {
    "id": "n03",
@@ -214,7 +243,8 @@
    ],
    "tidy_notes": [],
    "rule_flags": [],
-   "tries": 1
+   "tries": 1,
+   "review": "시연용 — 사람 승인 없음"
   },
   {
    "id": "n04",
@@ -225,7 +255,8 @@
    "rule_flags": [
     "사전 말이 명사 뒤에 붙음"
    ],
-   "tries": 1
+   "tries": 1,
+   "review": null
   },
   {
    "id": "n05",
@@ -235,9 +266,12 @@
    "tidy_notes": [],
    "rule_flags": [
     "설명 김",
-    "외래어 남음 '휘핑'"
+    "외래어 남음 '휘핑'",
+    "옵션 문구가 정해진 말과 다름 '휘핑 빼기'→'휘핑 빼기'",
+    "원문에 없는 말 '빨아'"
    ],
-   "tries": 2
+   "tries": 2,
+   "review": null
   },
   {
    "id": "n06",
@@ -246,9 +280,11 @@
    "easy_options": null,
    "tidy_notes": [],
    "rule_flags": [
-    "빠진 부정 정보 '커피 없음'"
+    "빠진 부정 정보 '커피 없음'",
+    "원문 재료 빠짐 '커피'"
    ],
-   "tries": 1
+   "tries": 1,
+   "review": null
   },
   {
    "id": "n07",
@@ -257,20 +293,23 @@
    "easy_options": null,
    "tidy_notes": [],
    "rule_flags": [
-    "조리법 지어냄 '익힌'"
+    "조리법 지어냄 '익힌'",
+    "원문에 없는 말 '익힌'"
    ],
-   "tries": 2
+   "tries": 2,
+   "review": null
   },
   {
    "id": "n08",
-   "used": "원문 유지",
-   "easy_desc": null,
-   "easy_options": null,
-   "tidy_notes": [],
-   "rule_flags": [
-    "숫자 '100'"
+   "used": "AI",
+   "easy_desc": "짜낸 오렌지 100% 주스예요.",
+   "easy_options": [
+    "차갑게"
    ],
-   "tries": 2
+   "tidy_notes": [],
+   "rule_flags": [],
+   "tries": 2,
+   "review": "시연용 — 사람 승인 없음"
   },
   {
    "id": "d01",
@@ -279,11 +318,12 @@
    "easy_options": null,
    "tidy_notes": [],
    "rule_flags": [
-    "숫자 '1'",
     "개념 추가 '알레르기 안내'",
-    "한글·기본 기호 밖 문자"
+    "한글·기본 기호 밖 문자",
+    "외래어 남음 '스타일'"
    ],
-   "tries": 2
+   "tries": 2,
+   "review": null
   },
   {
    "id": "d02",
@@ -294,7 +334,8 @@
    ],
    "tidy_notes": [],
    "rule_flags": [],
-   "tries": 1
+   "tries": 1,
+   "review": "시연용 — 사람 승인 없음"
   },
   {
    "id": "d03",
@@ -307,7 +348,8 @@
     "받침에 맞는 어미"
    ],
    "rule_flags": [],
-   "tries": 1
+   "tries": 1,
+   "review": "시연용 — 사람 승인 없음"
   },
   {
    "id": "d04",
@@ -320,7 +362,8 @@
     "받침에 맞는 어미"
    ],
    "rule_flags": [],
-   "tries": 1
+   "tries": 1,
+   "review": "시연용 — 사람 승인 없음"
   },
   {
    "id": "d05",
@@ -331,7 +374,8 @@
    ],
    "tidy_notes": [],
    "rule_flags": [],
-   "tries": 1
+   "tries": 1,
+   "review": "시연용 — 사람 승인 없음"
   },
   {
    "id": "d06",
@@ -342,18 +386,18 @@
    ],
    "tidy_notes": [],
    "rule_flags": [],
-   "tries": 1
+   "tries": 1,
+   "review": "시연용 — 사람 승인 없음"
   },
   {
    "id": "d07",
-   "used": "원문 유지",
-   "easy_desc": null,
-   "easy_options": null,
+   "used": "AI",
+   "easy_desc": "바닐라와 초콜릿 마카롱 2개입니다.",
+   "easy_options": [],
    "tidy_notes": [],
-   "rule_flags": [
-    "숫자 '2'"
-   ],
-   "tries": 2
+   "rule_flags": [],
+   "tries": 2,
+   "review": "시연용 — 사람 승인 없음"
   }
  ]
 }

@@ -15,7 +15,7 @@ const SPECIAL = {
   "알레르기 안내": [/알레르기|알러지/, /(?!)/],
 };
 export const JARGON = ["샷", "HOT", "ICE", "ONLY", "디카페인", "시럽", "휘핑", "드리즐", "스팀", "오트밀크", "에스프레소", "콜드브루",
-  "블렌디드", "퓨레", "페이스트", "티백", "베르가못", "파우더", "착즙", "페이스트리", "마끼아또", "비엔나"];
+  "블렌디드", "퓨레", "페이스트", "티백", "베르가못", "파우더", "착즙", "페이스트리", "마끼아또", "비엔나", "토핑", "스타일", "크리미", "블렌더"];
 const WARM = /따뜻|뜨겁|뜨거운/;
 const COLD_CHOICE = /차갑게|차가운|아이스로|시원하게/;
 const TRAPS = { // 가상 매장 '한모금' 메뉴의 함정 문항
@@ -46,7 +46,9 @@ export function checkEasy(it, out, glossary = null) {
   const desc = String(out.easy_desc || "");
   const opts = Array.isArray(out.options) ? out.options.map(String) : [];
   const text = desc + " " + opts.join(" ");
-  for (const m of text.matchAll(/\d[\d,.]*/g)) flags.push(`숫자 '${m[0]}'`);
+  // v0.5: 설명의 숫자는 원문에 같은 수·단위가 있으면 허용(「97% 이상」·「12시간」·「2개」), 옵션의 숫자(가격)는 계속 걸림
+  for (const m of desc.matchAll(/\d[\d,.]*/g)) if (!numberInSource(it, desc, m)) flags.push(`숫자 '${m[0]}'`);
+  for (const m of opts.join(" ").matchAll(/\d[\d,.]*/g)) flags.push(`숫자 '${m[0]}'`);
   for (const [c, re] of Object.entries(CONCEPTS)) {
     if (re.test(text) && !re.test(src)) {
       if (c === "물" && /ICE|HOT/.test(src)) continue;
@@ -78,11 +80,12 @@ export function checkEasy(it, out, glossary = null) {
   if (adv) flags.push(`어미 비문 '${adv[0]}'`);
   for (const m of src.matchAll(/([가-힣]+?)(이|가)? 없(음|는|이)/g)) {
     const noun = m[1].replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    if (!new RegExp(noun + "[가-힣]* ?(이 |가 )?없").test(text)) flags.push(`빠진 부정 정보 '${m[1]} 없음'`);
+    if (!new RegExp(noun + "[가-힣]* ?(이 |가 |은 |는 )?(없|들어 있지 않|들어가지 않|안 들어|넣지 않)").test(text)) flags.push(`빠진 부정 정보 '${m[1]} 없음'`);
   }
   if (GLUE.test(text)) flags.push("사전 말이 명사 뒤에 붙음");
   flags.push(...claimsV03(it, out));
   flags.push(...rulesV04(it, out, glossary));
+  flags.push(...rulesV05(it, out, glossary));
   return [...new Set(flags)];
 }
 
@@ -105,7 +108,7 @@ export const CLAIMS = [
 ];
 const NEG_INGR = /([가-힣]{1,6})(가|이|은|는|을|를)? ?(들어가지 않|넣지 않|없는|없이|안 들어간|빠진)/g;
 const CAFFEINE_SRC = /카페인을 [\d%이상 ]*줄인|카페인(이|은)? ?없/;
-const CAFFEINE_OUT = /카페인을 [가-힣 ]*줄|카페인(이|은)? ?(없|적|낮)/;
+const CAFFEINE_OUT = /카페인을 [가-힣\d% ]*줄|카페인(이|은)? ?(없|적|낮)/; // v0.5: 「97% 이상 줄인」
 export function claimsV03(it, out) {
   const flags = [];
   const desc = String(out.easy_desc || "");
@@ -121,7 +124,7 @@ export function claimsV03(it, out) {
   return flags;
 }
 
-export const GLUE = /[가-힣]+ (곱게 간 과일|곱게 으깬 것)/;
+export const GLUE = /[가-힣]+(?<![을를]) (곱게 간 과일|곱게 으깬 것)/;
 const batchim = (ch) => { const o = ch.charCodeAt(0) - 0xac00; return o >= 0 && o < 11172 && o % 28 !== 0; };
 // AI 설명의 띄어쓰기·받침에 맞는 '이에요/예요' — 기계적 다듬기(뜻 그대로). checkEasy 전에 부른다(Python rules_v02.tidy와 같음)
 export function tidy(desc) {
@@ -191,14 +194,14 @@ function foodIn(text) {
   return found;
 }
 // 메뉴의 재료 낱말 → 알레르기·재료 범주(부정 검사용)
-const CATEGORY = { "유제품": ["우유", "크림", "요거트", "치즈", "버터", "아이스크림"], "글루텐": ["밀"], "견과": ["땅콩", "호두", "아몬드"],
+const CATEGORY = { "유제품": ["우유", "크림", "요거트", "치즈", "버터", "아이스크림"], "글루텐": ["밀"], "견과": ["땅콩", "호두", "아몬드"], "견과류": ["땅콩", "호두", "아몬드"], "콩": ["대두"], "대두": ["대두"], "땅콩": ["땅콩"],
   "고기": ["돼지고기", "햄", "소고기", "닭고기", "베이컨"], "동물성": ["우유", "크림", "치즈", "버터", "계란", "햄"], "알": ["계란"], "달걀": ["계란"], "밀가루": ["밀"] };
 const SRC_ING = { "우유": /우유|밀크|라떼|크림|휘핑|요거트|치즈|버터|아이스크림/, "계란": /계란|달걀|마카롱|머랭/, "밀": /밀가루|빵|케이크|스콘|크루아상|브라우니|페이스트리|샌드위치|마들렌/,
   "크림": /크림|휘핑/, "치즈": /치즈/, "버터": /버터/, "요거트": /요거트/, "아이스크림": /아이스크림/, "햄": /햄/, "돼지고기": /돼지|햄/, "커피": /커피|에스프레소|원두|샷|콜드브루/ };
 const CLAIMS_V04 = [
   ["효능·기분", /기분(이|을)? ?(좋|밝|나아)|머리(가|를)? ?맑|맑아|비타민|채워 ?줘|몸(을|이)? ?(데워|따뜻|가볍|편)|편안|편해|목(이|에)? ?(아플|아프|편|좋)|속(이|을)? ?(편|든든)|차분|진정|기운|활력|푹 쉬|밤에도|집중|피부|해독|붓기|소화|숙면|잠(이|을|에)/],
   ["안심 주장", /안심|걱정 ?(없|없이|마|말)|아무나|누구나|모두 (먹|마시)|편하게 (드|먹|마시)/],
-  ["가격·순위 주장", /반값|세일|할인|저렴|(?<![가-힣])싸(요|게|고)|무료|공짜|(?<![가-힣])덤|하나 더|1 ?\+ ?1|값(이|을)? ?(내려|깎|싸)|인기|(?<![가-힣])가장|제일|최고|많이 찾|잘 팔|베스트|추천|1위/],
+  ["가격·순위 주장", /반값|세일|할인|저렴|(?<![가-힣])싸(요|게|고)|무료|공짜|(?<![가-힣])덤|하나 더|1 ?\+ ?1|값(이|을)? ?(내려|깎|싸)|인기|(?<![가-힣])가장(?! ?(위|아래|밑|끝|안쪽|바깥))|제일|최고|많이 찾|잘 팔|베스트|추천|1위/],
   ["임신·아이 주장", /임신|임산부|배 ?속|아기|태아|어린이|유아|아이(들)?(도|가|이)? ?(마실|먹을|마셔|먹어)/],
   ["식이 주장", /채식|비건|베지|고기 ?(없|빼|안)|무육|글루텐|락토|할랄|저염|무염|저지방|무지방|무설탕|짜지 않|덜 짠|싱거/],
   ["단맛 없음 주장", /(단맛|당|설탕)(을|이|은)? ?(쏙 |다 |모두 |전부 )?(뺀|빼고|없|안 넣)/],
@@ -218,10 +221,11 @@ export function rulesV04(it, out, glossary = null) {
   if (glossary) for (const [k, v] of Object.entries(glossary)) if (src.includes(k)) allowed += " " + v;
   // ① 한글 수사
   const kn = text.match(KNUM) || text.match(KTIME);
-  if (kn) flags.push(`한글 수량 '${kn[0]}'`);
+  if (kn && !(text.match(KNUM) && qtyAgree(it, desc).ok && !text.match(KTIME))) flags.push(`한글 수량 '${kn[0]}'`);
   // ② 닫힌 재료 어휘
   for (const w of foodIn(text)) {
     if (allowed.includes(w)) continue;
+    if (w === "빵" && it.category === "디저트" && /빵|스콘|크루아상|페이스트리|베이글/.test(src)) continue; // v0.5: 스콘·크루아상을 '빵'이라 함
     const c = Object.entries(CONCEPTS).find(([, re]) => re.test(w));
     if (c && c[1].test(allowed)) continue;
     flags.push(`원문에 없는 재료 '${w}'`);
@@ -265,5 +269,169 @@ export function rulesV04(it, out, glossary = null) {
   // ⑨ 쉬운 말에 외래어가 남음(2차 모의 심사 C·E: 「시럽 덜 달게」·「휘핑 크림 빼기」·「비엔나 스타일」)
   const left = JARGON.filter((j) => !/^(HOT|ICE|ONLY)$/.test(j) && !it.name.includes(j) && text.includes(j));
   if (left.length) flags.push(`외래어 남음 '${left.join("·")}'`);
+  return flags;
+}
+
+// ───────────────────────── v0.5(2026-10-17) — 3차 모의 심사 반영: 금지어를 늘리는 대신 '허용 어휘(닫힌 어휘)'로 바꿈 ─────────────────────────
+// 위원 5명이 v0.4 규칙을 본 뒤 새로 쓴 틀린 문장(평가 세트 ③ feasibility/eval3_judges_v04.json)의 56%를 놓침 → 유형마다 금지어를 더하는 방식은 따라잡지 못한다.
+// v0.5: ① 옵션은 원문 옵션을 사전으로 바꾼 정해진 문구와 정확히 같아야 함 ② 설명의 낱말은 원문·원문 낱말의 사전 풀이·조립 낱말(넣은·더한·섞은·올린…) 안에서만
+// ③ 수량(숫자·한글 수사)은 원문과 같은 수·단위만 ④ 원문의 재료(사전 풀이 뒤 식재료 낱말)는 빠지면 안 됨, 알레르기 재료를 '대신'·'조금만'으로 바꾸면 안 됨
+// ⑤ 시간·대상·질병·약·식사 대용·맛(쓴맛·달지 않음)·원산지·영어 낱말 주장은 원문에 없으면 안 됨.
+// 막히면 '원문 유지'(쉬운 낱말 사전 치환)로 돌아가므로, 맞는 문장을 더 막는(쉬운 말이 덜 나오는) 쪽으로 기울어 있다 — 그 비율도 함께 잰다.
+const KN_UNIT = { "한": 1, "하나": 1, "두": 2, "둘": 2, "세": 3, "셋": 3, "네": 4, "넷": 4, "다섯": 5, "여섯": 6, "일곱": 7, "여덟": 8, "아홉": 9 };
+const KN_TEN = { "열": 10, "스물": 20, "스무": 20, "서른": 30, "마흔": 40, "쉰": 50 };
+function korNum(w) {
+  if (w in KN_UNIT) return KN_UNIT[w];
+  if (w in KN_TEN) return KN_TEN[w];
+  for (const [t, tv] of Object.entries(KN_TEN)) if (w.startsWith(t)) { const r = w.slice(t.length); if (r in KN_UNIT) return tv + KN_UNIT[r]; }
+  return null;
+}
+const UNIT_CLASS = { "샷": "번", "번": "번", "개": "개", "구": "개", "조각": "조각", "쪽": "조각", "시간": "시간", "%": "%", "퍼센트": "%", "ml": "ml", "잔": "잔", "판": "판", "상자": "상자", "분": "분", "일": "일", "배": "배", "컵": "컵", "알": "알", "장": "장", "스푼": "스푼" };
+const UNIT_RE = "(샷|번|개|구|조각|쪽|시간|%|퍼센트|ml|잔|판|상자|분|일|배|컵|알|장|스푼)";
+function srcQuantities(it) {
+  const q = new Set();
+  const d = it.desc.replace(/\+[\d,]+원/g, "");
+  for (const m of d.matchAll(new RegExp("(\\d+)\\s*" + UNIT_RE, "g"))) q.add(`${Number(m[1])}${UNIT_CLASS[m[2]]}`);
+  for (const m of it.name.matchAll(/(\d+)\s*(구|개)/g)) q.add(`${Number(m[1])}개`);
+  // 사전 풀이가 넣는 수량: 샷 = '커피 원액 한 번'(원문에 '샷'만 있고 수가 없으면 1번)
+  if (/샷/.test(d) && ![...q].some((x) => x.endsWith("번"))) q.add("1번");
+  return q;
+}
+export function numberInSource(it, desc, m) {
+  const after = desc.slice(m.index + m[0].length).match(new RegExp("^\\s*" + UNIT_RE));
+  if (!after) return false;
+  return srcQuantities(it).has(`${Number(m[0].replace(/,/g, ""))}${UNIT_CLASS[after[1]]}`);
+}
+// 설명 속 수량 표현(숫자·한글 수사 + 단위, 단위 없는 하나·둘·셋)이 원문과 같은지
+export function qtyAgree(it, desc) {
+  const src = srcQuantities(it), bad = [];
+  for (const m of desc.matchAll(new RegExp("(?<![가-힣])(한|하나|두|둘|세|셋|네|넷|다섯|여섯|일곱|여덟|아홉|열[가-힣]{0,2}|스무|스물[가-힣]{0,2}|서른[가-힣]{0,2})\\s*" + UNIT_RE, "g"))) {
+    const n = korNum(m[1]);
+    if (n == null) continue;
+    if (!src.has(`${n}${UNIT_CLASS[m[2]]}`)) bad.push(m[0]);
+  }
+  for (const m of desc.matchAll(/(?<![가-힣])(하나|둘|셋|넷|다섯)(?=(이에요|예요|입니다|이|가|을|를|은|는|만|$|[ .,]))/g)) {
+    if (!src.has(`${korNum(m[1])}개`)) bad.push(m[0]);
+  }
+  return { ok: bad.length === 0, bad };
+}
+// 원문 옵션 → 손님 화면에 쓸 수 있는 쉬운 말 문구(정해진 목록). 모델의 옵션 글은 이 중 하나와 정확히 같아야 한다
+const bat = (w) => { const c = w.charCodeAt(w.length - 1) - 0xac00; return c >= 0 && c < 11172 && c % 28 !== 0 && c % 28 !== 8; }; // ㄹ 받침은 '로'
+function glossSub(text, glossary) {
+  let out = text;
+  for (const k of Object.keys(glossary || {}).sort((a, b) => b.length - a.length)) out = out.split(k).join(glossary[k]);
+  return out;
+}
+export function optionRenderings(it, o, glossary) {
+  const onlyHot = it.options.includes("HOT") && !it.options.includes("ICE");
+  const onlyIce = it.options.includes("ICE") && !it.options.includes("HOT");
+  if (o === "HOT") return onlyHot ? ["따뜻하게", "따뜻하게만"] : ["따뜻하게"];
+  if (o === "ICE") return onlyIce || /ICE ONLY/.test(it.desc) ? ["차갑게", "차갑게만"] : ["차갑게"];
+  if (o === "데워 드림") return ["데워 드림", "데워 드려요", "데워서 드려요", "따뜻하게 데워 드림", "데워 드리기"];
+  const base = o.replace(/\s*\+\s*[\d,]+원/, "").trim();
+  const sub = glossSub(base, glossary).trim();
+  const out = new Set([sub]);
+  let m;
+  if ((m = sub.match(/^(.+) 추가$/))) ["더", "더 넣기", "더 넣어요", "한 번 더"].forEach((v) => out.add(`${m[1]} ${v}`));
+  if ((m = sub.match(/^(.+) 변경$/))) { const j = bat(m[1]) ? "으로" : "로"; ["바꾸기", "바꿔요", "변경"].forEach((v) => out.add(`${m[1]}${j} ${v}`)); }
+  if ((m = sub.match(/^(.+) 빼기$/))) out.add(`${m[1]} 빼요`);
+  if ((m = sub.match(/^(.*)덜 달게$/))) { out.add("덜 달게"); if (m[1].trim()) out.add(`${m[1].trim()} 덜 넣기`); }
+  return [...out];
+}
+// 조립·연결 낱말(어디에나 쓸 수 있는 말). 조리·공정 낱말(갈아·구운·우린·내린·데운·얼린·짜낸·부은)은 넣지 않음 — 원문에 있을 때만
+const SAFE = ["넣", "더한", "더해", "더하", "섞", "올린", "올려", "올렸", "얹", "탄", "타서", "타고", "담", "만든", "만들", "들어간", "들어가", "들어",
+  "부어", "부은", "부", "붓", "녹인", "녹여", "풀어", "풀은", "먹", "떠먹", "마시", "마셔", "나", "나와", "없", "있지", "않", "수", "뺄", "고를", "바꿀", "가장", "그대", "낸",
+  "곁들", "함께", "위", "위에", "그리고", "및", "또", "있는", "있어", "있고", "있", "나는", "나요", "난", "된", "되는", "돼", "이에요", "예요", "입니다", "해요", "이고", "이며",
+  "음료", "메뉴", "것", "맛", "향", "진한", "진하게", "부드러운", "부드럽게", "속", "안", "사이", "로", "으로", "와", "과", "에", "의", "을", "를", "이", "가", "은", "는", "도", "만"];
+const SAFE_STEM = ["담", "넣", "섞", "얹", "먹", "붓"]; // 한 글자 조립 동사 줄기(담고·넣어·섞어…)
+const END = /(었어요|았어요|였어요|했어요|어요|아요|예요|이에요|입니다|이고|이며|해요|게요|지요|네요|에요|요)$/;
+const JOSA5 = /(으로|에서|이랑|부터|까지|처럼|하고|이나|에다|을|를|이|가|은|는|과|와|에|로|의|도|만|랑|나)$/;
+function words5(text) {
+  return text.replace(/[.,·!?()"'~+\-/:;]/g, " ").split(/\s+/).filter(Boolean).map((w) => w.replace(END, "").replace(JOSA5, "")).filter(Boolean);
+}
+const CLAIMS_V05 = [
+  ["시간·때 주장", /밤늦|늦은 ?(밤|저녁)|자기 ?전|잠자기|저녁에도|새벽|아침에|아무 ?때/],
+  ["대상 주장", /어르신|노인|이(가)? ?약한|씹기|어린 ?아이|아이도|분도|사람도|사람은|약한 ?분/],
+  ["질병·약 주장", /당뇨|혈당|혈압|콜레스테롤|약(을|과|이|은)? ?(먹|복용|같이|드시)|복용|위(가|에)? ?(약|안 좋)|속(이|을)? ?(쓰리|편|안 좋)|목(이|에)? ?(칼칼|아프|따끔|좋)|배(가|에)? ?(아프|아플)|감기|열(이)? ?날/],
+  ["식사 대용 주장", /밥 ?대신|한 ?끼|식사|대용|든든|배(가)? ?부르/],
+  ["맛 주장", /쓴맛|신맛|짠맛|떫|순하|순한|담백|고소|덜 쓴|안 써|쓰지 않|달지 않|안 달(아|고|게)|덜 단|단맛(이|은)? ?(없|적)/],
+  ["원산지·출처 주장", /제주|국산|수입|일본|중국|미국|프랑스|이탈리아|뉴욕|베트남|브라질|에티오피아|콜롬비아|하와이|해외|현지|산지|농장/],
+  ["만드는 곳·신선 주장", /갓 ?(딴|구운|만든|짠)|직접|수제|손으로|매장에서|당일|신선|농축|냉장/],
+  ["양 주장", /가득|듬뿍|넉넉|많이|조금|약간|살짝|아주|거의|적게|큰 ?잔|작은 ?잔|한 ?판|한 ?상자|며칠|하루 ?종일|늘|항상|언제나/],
+  ["다른 것으로 바꿈", /대신|말고|빼고 ?(대신|그 ?자리)/],
+];
+export function rulesV05(it, out, glossary = null) {
+  const flags = [];
+  const desc = String(out.easy_desc || "");
+  const opts = Array.isArray(out.options) ? out.options.map(String) : [];
+  const src = sourceText(it);
+  const base = [it.name, ...it.desc.split(/[.]/).filter((x) => !/변경|추가|빼기|선택|가능|조절/.test(x))].join(" ");
+  let allowed = src + " " + glossSub(src, glossary || {});
+  if (glossary) for (const [k, v] of Object.entries(glossary)) if (src.includes(k)) allowed += " " + v;
+  if (/라떼|밀크/.test(src)) allowed += " 우유";
+  const optWords = it.options.flatMap((o) => optionRenderings(it, o, glossary || {})).join(" ");
+  // ① 옵션 문구는 정해진 목록과 정확히
+  it.options.forEach((o, i) => {
+    const e = (opts[i] || "").replace(/\s+/g, " ").trim();
+    const ok = optionRenderings(it, o, glossary || {}).map((x) => x.replace(/\s+/g, " ").trim());
+    if (!ok.includes(e)) flags.push(`옵션 문구가 정해진 말과 다름 '${o}'→'${opts[i] || ""}'`);
+  });
+  // ② 닫힌 어휘: 설명의 낱말은 원문·사전 풀이·조립 낱말·(그 메뉴 옵션의 온도 말) 안에서만
+  const temp = (it.options.includes("HOT") || it.options.includes("데워 드림") ? " 따뜻 따뜻한 따뜻하게 데워 " : "") + (it.options.includes("ICE") ? " 차가운 차갑게 시원한 얼음 " : "");
+  const catWords = { "커피": " 커피", "차": " 차", "음료": " 음료", "디저트": " 디저트" }[it.category] || "";
+  const pool = allowed + " " + optWords + temp + catWords + (it.category === "디저트" && /빵|스콘|크루아상|페이스트리|베이글/.test(src) ? " 빵" : "")
+    + (SPECIAL["단맛"][1].test(src) ? " 달콤 달콤한 달달한" : "") + (/탄산/.test(src) ? " 톡 쏘 쏘는" : "")
+    + ([...src.matchAll(/(\d+)\s*%\s*이상\s*줄/g)].some((m) => Number(m[1]) >= 90) ? " 많 많이 크게" : "");
+  const SYN = { "녹차": "말차", "초코": "초콜릿", "달걀": "계란", "요구르트": "요거트", "귀리": "오트" }; // 좁은 동의어만(코코아≠초콜릿 소스)
+  const poolWords = new Set(words5(pool));
+  for (const [a, b2] of Object.entries(SYN)) if (pool.includes(b2) || pool.includes(a)) { poolWords.add(a); poolWords.add(b2); }
+  const FAMILY = [/^(짜|짠)/, /^(갈|간)$|^갈(아|고|은|린)/, /^(추출|뽑)/, /^(구운|구워|굽)/, /^(데운|데워|데우)/, /^(얼린|얼려|얼리)/, /^(으깨|으깬)/, /^(접어|접은|접)/, /^(우린|우려|우렸|우리)/, /^(뿌린|뿌려|뿌렸|뿌리)/, /^(내린|내려|내렸)/];
+  const covered = (w) => {
+    for (const f of FAMILY) if (f.test(w) && [...poolWords].some((p) => f.test(p))) return true;
+    if (w.length === 1) return poolWords.has(w) || SAFE.includes(w);
+    if (poolWords.has(w) || pool.includes(w) || SAFE.some((s) => s.length >= 2 ? w.startsWith(s) : w === s) || SAFE_STEM.some((s) => w.startsWith(s))) return true;
+    for (const cut of [1, 2]) { const s = w.slice(0, -cut); if (s.length >= 2 && pool.includes(s)) return true; }
+    return false;
+  };
+  const qa = qtyAgree(it, desc);
+  const qtyWords = new Set(qa.ok ? (desc.match(new RegExp("(한|하나|두|둘|세|셋|네|넷|다섯|여섯|일곱|여덟|아홉|열[가-힣]{0,2}|스무|스물[가-힣]{0,2}|서른[가-힣]{0,2})", "g")) || []) : []);
+  const strange = words5(desc).filter((w) => !/^[\d,.%]+$/.test(w) && !qtyWords.has(w) && !covered(w) && !/^[A-Za-z]+$/.test(w));
+  if (strange.length) flags.push(`원문에 없는 말 '${[...new Set(strange)].slice(0, 4).join("·")}'`);
+  // ③ 수량
+  if (!qa.ok) flags.push(`수량이 원문과 다름 '${qa.bad.join("·")}'`);
+  // ④ 원문 재료가 빠짐(사전 풀이 뒤 식재료 낱말 기준, 같은 개념 허용) · 알레르기 재료를 대신/조금만
+  const baseNoAllergy = base.replace(/알레르기:[^.]*/g, "");
+  const need = foodIn(glossSub(baseNoAllergy, glossary || {}) + (/라떼|밀크/.test(baseNoAllergy) ? " 우유" : ""));
+  for (const w of need) {
+    if (desc.includes(w)) continue;
+    const c = Object.entries(CONCEPTS).find(([, re]) => re.test(w));
+    if (c && c[1].test(desc)) continue;
+    flags.push(`원문 재료 빠짐 '${w}'`);
+  }
+  const allergyWords = new Set([...(Array.isArray(it.allergy_derived) ? it.allergy_derived : []), ...(((it.desc.match(/알레르기:\s*([^.]+)/) || [])[1] || "").split(/[,\s]+/).filter(Boolean))]);
+  const allergyRe = /(우유|크림|치즈|버터|요거트|요구르트|아이스크림|계란|달걀|밀|밀가루|대두|콩|땅콩|견과|견과류|아몬드|호두|돼지고기|햄|새우)(은|는|이|가|도|을|를)? ?(조금만|조금|아주 조금|약간|살짝|거의|적게|없|안 |빼|대신|말고)/g;
+  for (const m of desc.matchAll(allergyRe)) {
+    const cats = CATEGORY[m[1]] || [m[1]];
+    if ((allergyWords.size && cats.some((x) => allergyWords.has(x))) || need.has(m[1]) || allowed.includes(m[1])) flags.push(`알레르기 재료를 줄이거나 없앰 '${m[0].trim()}'`);
+  }
+  // ⑤ 주장어(원문에 없을 때) · 영어 낱말
+  const bigCut = [...src.matchAll(/(\d+)\s*%\s*이상\s*줄/g)].some((m) => Number(m[1]) >= 90);
+  for (const [name, re] of CLAIMS_V05) {
+    const mm = desc.match(re);
+    if (!mm || re.test(src)) continue;
+    if (name === "양 주장" && bigCut && /^(많이|크게)$/.test(mm[0]) && /(많이|크게) ?(줄|덜)/.test(desc)) continue;
+    flags.push(`주장어 '${name}' '${mm[0]}'`);
+  }
+  // '…을 뺄 수 있어요'·'…으로 바꿀 수' — 그런 옵션이 실제로 있어야 함
+  for (const m of desc.matchAll(/([가-힣]+?)(을|를)? ?(뺄|바꿀|고를|더 넣을) 수/g)) {
+    const w = m[1];
+    if (!it.options.some((o) => (o.includes(w) || glossSub(o, glossary || {}).includes(w)) && /빼기|변경|추가|선택|덜/.test(o))) flags.push(`없는 옵션을 말함 '${m[0]}'`);
+  }
+  for (const m of desc.matchAll(/[A-Za-z]{2,}/g)) if (!src.includes(m[0])) flags.push(`원문에 없는 영어 '${m[0]}'`);
+  // 온도 함정 넓힘(따끈·뜨끈·식혀·미지근)
+  const hasHot = it.options.includes("HOT"), hasIce = it.options.includes("ICE");
+  if (hasIce && !hasHot && /따끈|뜨끈|훈훈/.test(desc)) flags.push("온도 함정: 차갑게만");
+  if (hasHot && !hasIce && /식혀|식힌|미지근|시원/.test(desc)) flags.push("온도 함정: 따뜻하게만");
+  if (!hasHot && !hasIce && !it.options.includes("데워 드림") && /따뜻|뜨거|따끈|차가|차갑|시원/.test(desc) && !/따뜻|뜨거|차가|차갑|시원/.test(src)) flags.push("온도 주장(온도 선택 없는 메뉴)");
   return flags;
 }

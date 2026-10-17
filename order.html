@@ -14,7 +14,7 @@
   <button id="cartbtn" class="ghost" type="button">담은 것 <span id="cartn">0</span></button>
 </div>
 <script type="module">
-import { loadProfile, profileFromUrl, applyProfile, loadStore, viewItem, allergyBox, won, speak, channel, el, CODES, hasKoreanVoice } from "./js/common.js";
+import { loadProfile, profileFromUrl, applyProfile, loadStore, viewItem, allergyBox, allergyLine, won, speak, channel, el, CODES, hasKoreanVoice } from "./js/common.js";
 
 const qs = new URLSearchParams(location.search);
 const k = /^\d{4}$/.test(qs.get("k") || "") ? qs.get("k") : ""; // v0.3: 네 자리 숫자만
@@ -95,7 +95,7 @@ function item(v) {
   const descCard = () => el("div", { class: "card" },
     el("div", { class: "row" }, el("b", { class: "grow" }, v.name), el("span", { class: "price" }, won(v.price))),
     el("p", {}, v.desc),
-    el("span", { class: "tag " + (v.source === "AI 쉬운 말" ? "ai" : "orig") }, SOURCE_LABEL[v.source] || "매장 설명 그대로"));
+    el("span", { class: "tag " + (v.source === "AI 쉬운 말" ? "ai" : "orig") }, (SOURCE_LABEL[v.source] || "매장 설명 그대로") + (v.review ? ` · ${v.review}` : ""))); // v0.5: 승인 상태(시연 저장본은 '시연용 — 사람 승인 없음')
   // 고르는 화면의 짧은 머리(이름·가격) — v0.4(2차 모의 심사 D): '모두 켜기'에서도 고르는 단추가 첫 화면 안에(글씨 > 단추 > 설명)
   const miniHead = () => el("p", { class: "row" }, el("b", { class: "grow" }, v.name), el("span", { class: "price" }, won(v.price)));
   const onePerScreen = codes.has("ONE");
@@ -156,9 +156,13 @@ function item(v) {
 function confirmOrder() {
   if (!cart.length) { screen("아직 담은 것이 없어요", el("button", { type: "button", class: "block", onclick: home }, "메뉴 보기")); return; }
   const sum = cart.reduce((s, c) => s + c.price, 0);
+  const byId = Object.fromEntries(store.menu.items.map((i) => [i.id, i]));
+  // v0.5(3차 모의 심사 A·D·E P0: '결제 전 확인에서 알레르기 다시 표시'가 사실이 아니었음) — 품목마다 알레르기 한 줄(담기 화면의 상자와 같은 근거)
   screen("결제 전에 확인하세요",
-    el("div", { class: "card" }, ...cart.map((c, i) => el("div", { class: "row" }, el("span", { class: "grow" }, `${i + 1}. ${c.label}`), el("span", { class: "price" }, won(c.price)),
-      el("button", { type: "button", class: "ghost", "aria-label": `${c.label} 빼기`, onclick: () => { cart.splice(i, 1); confirmOrder(); } }, "빼기"))),
+    el("div", { class: "card" }, ...cart.map((c, i) => el("div", { class: "cartline" },
+      el("div", { class: "row" }, el("span", { class: "grow" }, `${i + 1}. ${c.label}`), el("span", { class: "price" }, won(c.price)),
+        el("button", { type: "button", class: "ghost", "aria-label": `${c.label} 빼기`, onclick: () => { cart.splice(i, 1); confirmOrder(); } }, "빼기")),
+      el("div", { class: "allergy-line" }, allergyLine(viewItem(byId[c.id], store, codes.has("EASY")))))),
       el("p", { class: "price", style: "font-size:1.3em" }, `합계 ${won(sum)}`)),
     el("button", { type: "button", class: "block", onclick: () => pay(sum) }, "결제하기(시연)"),
     el("button", { type: "button", class: "block ghost", onclick: home }, "더 고르기"));
@@ -180,11 +184,12 @@ function pay(sum) {
 document.getElementById("staff").onclick = () => {
   channel().postMessage({ type: "staff", k });
   // v0.4(2차 모의 심사 E): 하던 주문을 지우지 않고 화면 위에 알림만 띄운다
+  // v0.5(3차 모의 심사: 아래로 내린 화면에서 누르면 알림이 화면 밖) — 화면 위에 고정(쪽을 넘겨도 닫을 때까지 남음)
   const old = document.getElementById("staffnote"); if (old) old.remove();
-  const note = el("div", { class: "card notice", id: "staffnote", role: "status" },
+  const note = el("div", { class: "card notice staffnote", id: "staffnote", role: "status" },
     el("b", {}, "직원을 불렀어요"), el("p", {}, "잠시만 기다려 주세요. 하던 주문은 그대로 있어요. (시연: 한 기기 시연 화면에서만 키오스크에 표시되고, 실제 호출은 되지 않아요)"),
     el("button", { type: "button", class: "ghost", onclick: () => note.remove() }, "알림 닫기"));
-  app.prepend(note);
+  document.body.append(note);
   document.getElementById("live").textContent = "직원을 불렀어요. 하던 주문은 그대로 있어요.";
   say("직원을 불렀어요. 하던 주문은 그대로 있어요.");
 };

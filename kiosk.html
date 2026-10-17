@@ -75,26 +75,49 @@ channel().addEventListener("message", (ev) => {
     box.replaceChildren(el("b", {}, "직원 호출 — 내 방식 화면에서 도움을 요청했어요"), el("div", { class: "sub" }, "시연: 실제 호출은 되지 않아요"));
     return;
   }
-  if (m.type !== "order" || !Array.isArray(m.lines)) return;
+  if (m.type !== "order") return;
   modal.classList.remove("open");
   box.hidden = false;
-  // v0.4(2차 모의 심사 B 실측: 폰이 보낸 '합계 1원'을 그대로 표시) — 키오스크가 자기 가격표로 다시 계산하고, 폰 합계와 다르면 경고
+  // v0.5(3차 모의 심사: 키오스크가 휴대폰이 보낸 품목 글을 그대로 보여 줌) — 휴대폰 글은 쓰지 않고, 키오스크가 자기 메뉴판으로 줄을 다시 만든다.
+  // 검증: 키오스크 번호 · 메뉴 id · 온도(HOT/ICE 중 하나, 둘 다 있는 메뉴는 반드시 하나) · 옵션 번호(온도 아닌 것, 겹침 없음) · 수량(품목 줄 수 = 휴대폰이 보낸 줄 수, 한 줄에 1개)
+  // v0.4: 합계도 키오스크 가격표로 다시 계산하고, 휴대폰 합계와 다르면 경고
   const byId = Object.fromEntries(store.menu.items.map((i) => [i.id, i]));
   const extraOf = (o) => { const x = String(o).match(/\+([\d,]+)원/); return x ? Number(x[1].replace(/,/g, "")) : 0; };
-  let mine = 0, bad = !Array.isArray(m.items) || !m.items.length;
-  for (const c of (m.items || [])) {
+  const isTemp = (o) => o === "HOT" || o === "ICE";
+  const TEMP_WORD = { HOT: "따뜻하게", ICE: "차갑게" };
+  const warn = [];
+  if (String(m.k || "") !== k) warn.push(m.k ? `다른 키오스크 번호(${String(m.k).replace(/\D/g, "").slice(0, 4)})로 보낸 주문이에요 — 이 키오스크(${k}) 주문이 아니에요` : "키오스크 번호가 없는 주문이에요");
+  const lines = [];
+  let mine = 0;
+  const items = Array.isArray(m.items) ? m.items : [];
+  if (!items.length) warn.push("주문 품목을 읽을 수 없어요");
+  if (Array.isArray(m.lines) && m.lines.length !== items.length) warn.push(`품목 수가 맞지 않아요(휴대폰 글 ${m.lines.length}줄 · 품목 ${items.length}개)`);
+  items.forEach((c, n) => {
     const it = byId[c && c.id];
-    if (!it) { bad = true; continue; }
-    mine += it.price;
-    for (const i of (Array.isArray(c.on) ? c.on : [])) { if (Number.isInteger(i) && it.options[i] != null) mine += extraOf(it.options[i]); else bad = true; }
-  }
+    if (!it) { warn.push(`${n + 1}번 품목: 이 매장 메뉴에 없는 메뉴예요`); return; }
+    if (c.qty != null && c.qty !== 1) warn.push(`${n + 1}번 품목(${it.name}): 수량 ${String(c.qty).slice(0, 4)} — 한 줄에 1개만 받아요`);
+    const temps = it.options.map((o, i) => (isTemp(o) ? i : -1)).filter((i) => i >= 0);
+    const parts = [];
+    if (c.temp != null) {
+      if (Number.isInteger(c.temp) && temps.includes(c.temp)) parts.push(TEMP_WORD[it.options[c.temp]]);
+      else warn.push(`${n + 1}번 품목(${it.name}): 이 메뉴에 없는 온도예요`);
+    } else if (temps.length >= 2) warn.push(`${n + 1}번 품목(${it.name}): 따뜻하게·차갑게 중 고른 것이 없어요`);
+    else if (temps.length === 1) parts.push(TEMP_WORD[it.options[temps[0]]]);
+    const on = Array.isArray(c.on) ? c.on : [];
+    if (new Set(on).size !== on.length) warn.push(`${n + 1}번 품목(${it.name}): 같은 옵션이 두 번 들어 있어요`);
+    let price = it.price;
+    for (const i of new Set(on)) {
+      if (Number.isInteger(i) && it.options[i] != null && !isTemp(it.options[i])) { parts.push(it.options[i]); price += extraOf(it.options[i]); }
+      else warn.push(`${n + 1}번 품목(${it.name}): 이 메뉴에 없는 옵션이에요`);
+    }
+    mine += price;
+    lines.push(el("li", {}, `${it.name}${parts.length ? ` (${parts.join(", ")})` : ""} — ${won(price)}`));
+  });
   const phoneTotal = Number(m.total) || 0;
-  const kids = [el("b", {}, `내 방식 주문이 도착했어요 — 주문 번호 ${m.no}`), el("div", {}, m.lines.join(" · "))];
-  if (bad) kids.push(el("div", { class: "price" }, "주문 내용을 키오스크 가격표와 맞춰 볼 수 없어요 — 직원 확인이 필요해요"));
-  else {
-    kids.push(el("div", { class: "price" }, `합계 ${won(mine)} (키오스크 가격표로 계산)`));
-    if (mine !== phoneTotal) kids.push(el("div", { class: "sub" }, `휴대폰이 보낸 합계(${won(phoneTotal)})와 달라요 — 키오스크 가격으로 결제합니다`));
-  }
+  const kids = [el("b", {}, `내 방식 주문이 도착했어요 — 주문 번호 ${String(m.no || "").slice(0, 8)}`), el("div", { class: "sub small" }, "키오스크 메뉴판으로 다시 만든 주문"), el("ol", { class: "kiosk-lines" }, ...lines)];
+  if (warn.length) kids.push(el("div", { class: "price" }, "확인이 필요해요 — 직원 확인 뒤 결제합니다"), el("ul", { class: "kiosk-warn" }, ...warn.map((w) => el("li", {}, w))));
+  if (lines.length) kids.push(el("div", { class: "price" }, `합계 ${won(mine)} (키오스크 가격표로 계산)`));
+  if (lines.length && mine !== phoneTotal) kids.push(el("div", { class: "sub" }, `휴대폰이 보낸 합계(${won(phoneTotal)})와 달라요 — 키오스크 가격으로 결제합니다`));
   box.replaceChildren(...kids);
 });
 </script>

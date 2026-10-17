@@ -54,7 +54,35 @@ export async function loadStore() {
     loadJSON("assets/glossary.json"),
   ]);
   const easyById = Object.fromEntries(easy.rows.map((r) => [r.id, r]));
-  return { menu, easy, easyById, glossary: gloss.terms };
+  return { menu, easy, easyById, glossary: gloss.terms, review: loadReview() };
+}
+
+// v0.5(3차 모의 심사 A·C·D): 운영자 승인 — AI 변환은 '승인 대기'로 저장하고, 운영자가 원문과 나란히 보고 승인한 것만 손님 화면에 낸다.
+// 시제품은 이 브라우저(localStorage)에만 저장한다(실제 서비스는 매장 관리 서버). 승인은 그 글자 그대로에 묶인다(글이 바뀌면 다시 승인).
+// 시연 매장 저장본은 사람이 승인하지 않았다 → '시연용 — 사람 승인 없음'으로 표시(운영자가 '승인한 것만' 을 켜면 손님 화면에서 빠짐)
+const RKEY = "mywayqr.review.v1";
+export function loadReview() {
+  try {
+    const v = JSON.parse(localStorage.getItem(RKEY) || "null");
+    if (v && typeof v === "object") return { strict: !!v.strict, ids: v.ids || {}, pending: v.pending || {} };
+  } catch (e) { /* 저장소를 못 쓰는 환경 */ }
+  return { strict: false, ids: {}, pending: {} };
+}
+export function saveReview(r) { try { localStorage.setItem(RKEY, JSON.stringify(r)); } catch (e) { /* 이번 화면에만 적용 */ } }
+const sameText = (a, b) => !!a && !!b && a.desc === b.easy_desc && JSON.stringify(a.options || null) === JSON.stringify(b.easy_options || null);
+// 메뉴 한 개의 AI 변환과 승인 상태: { row, state } — state = "승인" | "반려" | "승인 대기" | "시연용 — 사람 승인 없음" | null(AI 변환 없음)
+export function reviewOf(id, store) {
+  const rv = store.review || { ids: {}, pending: {} };
+  const mark = rv.ids[id];
+  const pend = rv.pending[id];
+  if (pend && pend.used === "AI") {
+    if (sameText(mark, pend)) return { row: pend, state: mark.state };
+    // 새 변환이 승인 전이면 손님 화면은 그 전 것을 계속 쓴다(아래로)
+  }
+  const row = store.easyById[id];
+  if (!row || row.used !== "AI" || !row.easy_desc) return { row: null, state: pend && pend.used === "AI" ? "승인 대기" : null, pending: pend || null };
+  if (sameText(mark, row)) return { row, state: mark.state, pending: pend || null };
+  return { row, state: row.review || "시연용 — 사람 승인 없음", pending: pend || null };
 }
 
 // 사전 치환(Claude가 원문 뜻과 대조해 정리한 짧은 말만 — 사람 검수 전) — 원문 유지 항목의 설명·옵션에 쓴다. v0.2(2026-10-17, Python rules_v02와 같음):
@@ -67,8 +95,14 @@ const NUM_RULES = [
   [/(\d+)샷/g, "커피 원액 $1번"],
   [/((?:[가-힣]+ )?[가-힣]+) 페이스트(?!리)/g, "곱게 으깬 $1"],
   [/((?:[가-힣]+ )?[가-힣]+) 퓨레/g, "곱게 간 $1"],
+  // v0.5(3차 모의 심사: 쉬운 말을 켰는데 '비엔나 스타일·토핑·+'가 남음) — 사전 풀이와 겹치는 꾸밈말을 먼저 정리
+  [/크림을 올린 비엔나 스타일/g, "크림을 올린"],
+  [/뉴욕 스타일 /g, ""],
+  [/(겹겹이 [가-힣]+ 구운) 페이스트리/g, "$1 빵"],
+  [/베르가못 향/g, "감귤류 향"],
+  [/ \+ /g, ", "],
 ];
-const EXTRA_TERMS = { "콜드브루 원액": "커피 원액", "카라멜 드리즐": "가늘게 뿌린 카라멜 소스" };
+const EXTRA_TERMS = { "콜드브루 원액": "커피 원액", "카라멜 드리즐": "가늘게 뿌린 카라멜 소스", "휘핑크림 토핑": "위에 올린 달콤한 크림" };
 const esc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 export function substitute(text, glossary) {
   let out = text;
@@ -102,18 +136,21 @@ export function substituteSafe(text, glossary) {
 
 // 화면에 보일 메뉴 한 개: 이름·가격·알레르기는 항상 원본 값. 설명·옵션 이름만 프로필(EASY)에 따라 바뀜
 export function viewItem(it, store, easyOn) {
-  const e = store.easyById[it.id];
+  const rv = reviewOf(it.id, store);
+  // 손님 화면에 낼 AI 변환: 승인한 것, 또는 시연용(운영자가 '승인한 것만'을 켜지 않았을 때). 반려·승인 대기는 내지 않는다
+  const e = rv.row && (rv.state === "승인" || (rv.state === "시연용 — 사람 승인 없음" && !(store.review && store.review.strict))) ? rv.row : null;
   // 알레르기: 매장이 적은 '알레르기:'(원문) 또는 v0.4 메뉴 글의 재료 낱말로 정한 성분(allergy_derived, 매장 확인 필요). 둘 다 없으면 null
   const declared = (it.desc.match(/알레르기:\s*([^.]+)/) || [])[1] || null;
   const derived = Array.isArray(it.allergy_derived) ? it.allergy_derived : null;
   const allergy = declared || (derived && derived.length ? derived.join(", ") : null);
   const allergySource = declared ? "매장 원문" : (derived ? (derived.length ? "재료 낱말" : "낱말 없음") : "없음");
-  let desc = it.desc, options = it.options.slice(), source = "원문";
+  let desc = it.desc, options = it.options.slice(), source = "원문", review = null;
   if (easyOn) {
     if (e && e.used === "AI" && e.easy_desc) {
       desc = e.easy_desc;
       options = (e.easy_options && e.easy_options.length === it.options.length) ? e.easy_options.slice() : it.options.map((o) => substituteSafe(o, store.glossary).text);
       source = "AI 쉬운 말";
+      review = rv.state === "승인" ? "매장 승인" : "시연용 — 사람 승인 없음";
     } else {
       const r = substituteSafe(it.desc.replace(/알레르기:[^.]*\.?/, "").trim(), store.glossary);
       desc = r.text;
@@ -123,7 +160,7 @@ export function viewItem(it, store, easyOn) {
   }
   // 옵션의 추가 금액은 원본에서 다시 읽는다(모델이 숫자를 쓰지 못하게 했으므로)
   const extra = it.options.map((o) => { const m = o.match(/\+([\d,]+)원/); return m ? Number(m[1].replace(/,/g, "")) : 0; });
-  return { id: it.id, name: it.name, category: it.category, price: it.price, desc, options, rawOptions: it.options, extra, allergy, allergySource, source };
+  return { id: it.id, name: it.name, category: it.category, price: it.price, desc, options, rawOptions: it.options, extra, allergy, allergySource, source, review };
 }
 
 // v0.4: 알레르기 안내 상자 — 모든 모드·모든 단계에서 같은 문구(2차 모의 심사 D·E)
@@ -133,6 +170,13 @@ export function allergyBox(v) {
     el("div", { class: "sub small" }, "메뉴 설명에 적힌 재료로 표시했어요. 소스·시럽 성분은 매장에 확인하세요."));
   return el("div", { class: "card allergy" }, el("b", {}, "알레르기 정보"),
     el("div", {}, "메뉴 설명에 알레르기 유발 성분이 적혀 있지 않아요. 걱정되면 「직원 부르기」로 물어보세요."));
+}
+
+// v0.5(3차 모의 심사 A·D·E P0): 결제 전 확인 화면의 품목마다 붙이는 알레르기 한 줄 — allergyBox와 같은 근거·같은 말
+export function allergyLine(v) {
+  if (v.allergySource === "매장 원문") return `알레르기(매장 원문): ${v.allergy}`;
+  if (v.allergySource === "재료 낱말") return `알레르기 유발 성분: ${v.allergy} (메뉴 설명의 재료로 표시 — 소스·시럽은 매장에 확인)`;
+  return "알레르기 정보 없음 — 걱정되면 「직원 부르기」로 물어보세요";
 }
 
 export const won = (n) => n.toLocaleString("ko-KR") + "원";
