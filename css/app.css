@@ -103,7 +103,7 @@ th, td { border-bottom: 1px solid var(--line); padding: 6px 8px; text-align: lef
 .demo { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; }
 .demo iframe { width: 100%; height: 760px; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
 .phoneframe { max-width: 400px; justify-self: center; width: 100%; }
-@media (max-width: 860px) { .demo { grid-template-columns: 1fr; } .demo iframe { height: 640px; } }
+@media (max-width: 860px) { .demo { grid-template-columns: 1fr; } .demo iframe { height: 640px; } .demo .phoneframe { order: -1; } } /* v0.4(2차 모의 심사 A·E): 휴대폰으로 열면 손님 화면을 먼저 */
 
 /* v0.3: 화면 읽기 프로그램에만 들리는 안내 한 줄(aria-live는 여기만) */
 .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
