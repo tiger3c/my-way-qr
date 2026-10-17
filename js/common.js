@@ -57,7 +57,7 @@ export async function loadStore() {
   return { menu, easy, easyById, glossary: gloss.terms };
 }
 
-// 사전 치환(검수된 짧은 말만) — 원문 유지 항목의 설명·옵션에 쓴다. v0.2(2026-10-17, Python rules_v02와 같음):
+// 사전 치환(Claude가 원문 뜻과 대조해 정리한 짧은 말만 — 사람 검수 전) — 원문 유지 항목의 설명·옵션에 쓴다. v0.2(2026-10-17, Python rules_v02와 같음):
 // ① 숫자+단위·어순 규칙을 먼저(「에스프레소 2샷」 → 「진한 커피 원액 2번」) ② 묶음 말 ③ 사전(긴 말부터)
 // ④ 치환 뒤 깨진 모양(숫자 바로 뒤 사전 말·같은 말 연달아·명사 뒤에 붙은 사전 말)이면 치환을 버리고 매장 원문 그대로
 const NUM_RULES = [
@@ -88,7 +88,16 @@ export function broken(text, glossary) {
 export function substituteSafe(text, glossary) {
   const s = substitute(text, glossary);
   const why = broken(s, glossary);
-  return why.length ? { text, src: "원문", why } : { text: s, src: "사전 치환", why: [] };
+  // v0.4: 바꿀 말 바로 앞 네 낱말에 사전 풀이의 낱말이 둘 이상 이미 있음(「버터를 겹겹이 접어 구운 페이스트리」 → 「… 구운 버터를 겹겹이 넣어 구운 빵」 겹침)
+  const pre = NUM_RULES.reduce((t, [re, rep]) => t.replace(re, rep), text); // 숫자·어순 규칙이 먼저 바꾼 뒤의 글로 본다
+  for (const [k, v] of Object.entries({ ...glossary, ...EXTRA_TERMS })) {
+    const i = pre.indexOf(k);
+    if (i < 0) continue;
+    const near = pre.slice(0, i).split(/\s+/).slice(-4).join(" ");
+    if (v.split(" ").filter((x) => x.length >= 2 && near.includes(x)).length >= 2) { why.push("사전 풀이가 앞말과 겹침"); break; }
+  }
+  // v0.4(2차 모의 심사 D): 바뀐 낱말이 없으면 '매장 설명 그대로'(치즈케이크처럼 바꿀 말이 없는 설명)
+  return why.length ? { text, src: "원문", why } : { text: s, src: s === text ? "원문" : "사전 치환", why: [] };
 }
 
 // 화면에 보일 메뉴 한 개: 이름·가격·알레르기는 항상 원본 값. 설명·옵션 이름만 프로필(EASY)에 따라 바뀜
