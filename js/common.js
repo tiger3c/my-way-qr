@@ -25,7 +25,7 @@ export function saveProfile(codes) {
 export function clearProfile() { try { localStorage.removeItem(KEY); } catch (e) { /* 무시 */ } }
 
 // URL로 넘어온 프로필(한 기기 시연용, 예: #p=BIG.EASY) — 저장소보다 우선.
-// v0.3: 시연은 주소의 # 뒤(서버로 가지 않는 부분)에 붙인다(1차 모의 심사 A). 예전 ?p= 도 읽음
+// v0.3: 시연은 주소의 # 뒤(서버로 가지 않는 부분)에 붙인다(1차 내부 점검 A). 예전 ?p= 도 읽음
 export function profileFromUrl() {
   const p = new URLSearchParams(location.hash.slice(1)).get("p") || new URLSearchParams(location.search).get("p");
   if (!p) return null;
@@ -47,17 +47,25 @@ export async function loadJSON(path) {
   return r.json();
 }
 
-export async function loadStore() {
+export const STORES = ["hanmogeum"]; // 시연 매장(가상). 주소의 store= 는 이 목록 안에서만
+export function storeId() {
+  const s = new URLSearchParams(location.search).get("store");
+  return STORES.includes(s) ? s : STORES[0];
+}
+export async function loadStore(sid = storeId()) {
   const [menu, easy, gloss] = await Promise.all([
-    loadJSON("assets/menu-hanmogeum.json"),
-    loadJSON("assets/easy-hanmogeum.json"),
+    loadJSON(`assets/menu-${sid}.json`),
+    loadJSON(`assets/easy-${sid}.json`),
     loadJSON("assets/glossary.json"),
   ]);
+  // v0.6: AI 화면 구성안(기능 조합별 저장본) — 없으면 코드의 기본 구성
+  let plans = null;
+  try { plans = await loadJSON(`assets/plans-${sid}.json`); } catch (e) { plans = null; }
   const easyById = Object.fromEntries(easy.rows.map((r) => [r.id, r]));
-  return { menu, easy, easyById, glossary: gloss.terms, review: loadReview() };
+  return { menu, easy, easyById, glossary: gloss.terms, review: loadReview(), plans };
 }
 
-// v0.5(3차 모의 심사 A·C·D): 운영자 승인 — AI 변환은 '승인 대기'로 저장하고, 운영자가 원문과 나란히 보고 승인한 것만 손님 화면에 낸다.
+// v0.5(3차 내부 점검 A·C·D): 운영자 승인 — AI 변환은 '승인 대기'로 저장하고, 운영자가 원문과 나란히 보고 승인한 것만 손님 화면에 낸다.
 // 시제품은 이 브라우저(localStorage)에만 저장한다(실제 서비스는 매장 관리 서버). 승인은 그 글자 그대로에 묶인다(글이 바뀌면 다시 승인).
 // 시연 매장 저장본은 사람이 승인하지 않았다 → '시연용 — 사람 승인 없음'으로 표시(운영자가 '승인한 것만' 을 켜면 손님 화면에서 빠짐)
 const RKEY = "mywayqr.review.v1";
@@ -88,14 +96,17 @@ export function reviewOf(id, store) {
 // 사전 치환(Claude가 원문 뜻과 대조해 정리한 짧은 말만 — 사람 검수 전) — 원문 유지 항목의 설명·옵션에 쓴다. v0.2(2026-10-17, Python rules_v02와 같음):
 // ① 숫자+단위·어순 규칙을 먼저(「에스프레소 2샷」 → 「진한 커피 원액 2번」) ② 묶음 말 ③ 사전(긴 말부터)
 // ④ 치환 뒤 깨진 모양(숫자 바로 뒤 사전 말·같은 말 연달아·명사 뒤에 붙은 사전 말)이면 치환을 버리고 매장 원문 그대로
+const KNUM = { 1: "한", 2: "두", 3: "세", 4: "네", 5: "다섯" };
+const kNum = (n) => KNUM[Number(n)] || n;
 const NUM_RULES = [
   [/줄인 디카페인 원두/g, "줄인 원두"], // v0.3(rules_v03.PHRASE_RULES): 「카페인을 줄인 카페인을 줄인」 겹침 방지
-  [/에스프레소 (\d+)샷/g, "진한 커피 원액 $1번"],
-  [/원액 (\d+)샷/g, "원액 $1번"],
-  [/(\d+)샷/g, "커피 원액 $1번"],
+  // v0.6(3차 내부 점검 E·D): 「2샷 → 2번」은 '두 번째'로 읽히기 쉬움 → 한글 수(두 번)
+  [/에스프레소 (\d+)샷/g, (m, n) => `진한 커피 원액 ${kNum(n)} 번`],
+  [/원액 (\d+)샷/g, (m, n) => `원액 ${kNum(n)} 번`],
+  [/(\d+)샷/g, (m, n) => `커피 원액 ${kNum(n)} 번`],
   [/((?:[가-힣]+ )?[가-힣]+) 페이스트(?!리)/g, "곱게 으깬 $1"],
   [/((?:[가-힣]+ )?[가-힣]+) 퓨레/g, "곱게 간 $1"],
-  // v0.5(3차 모의 심사: 쉬운 말을 켰는데 '비엔나 스타일·토핑·+'가 남음) — 사전 풀이와 겹치는 꾸밈말을 먼저 정리
+  // v0.5(3차 내부 점검: 쉬운 말을 켰는데 '비엔나 스타일·토핑·+'가 남음) — 사전 풀이와 겹치는 꾸밈말을 먼저 정리
   [/크림을 올린 비엔나 스타일/g, "크림을 올린"],
   [/뉴욕 스타일 /g, ""],
   [/(겹겹이 [가-힣]+ 구운) 페이스트리/g, "$1 빵"],
@@ -130,7 +141,7 @@ export function substituteSafe(text, glossary) {
     const near = pre.slice(0, i).split(/\s+/).slice(-4).join(" ");
     if (v.split(" ").filter((x) => x.length >= 2 && near.includes(x)).length >= 2) { why.push("사전 풀이가 앞말과 겹침"); break; }
   }
-  // v0.4(2차 모의 심사 D): 바뀐 낱말이 없으면 '매장 설명 그대로'(치즈케이크처럼 바꿀 말이 없는 설명)
+  // v0.4(2차 내부 점검 D): 바뀐 낱말이 없으면 '매장 설명 그대로'(치즈케이크처럼 바꿀 말이 없는 설명)
   return why.length ? { text, src: "원문", why } : { text: s, src: s === text ? "원문" : "사전 치환", why: [] };
 }
 
@@ -163,7 +174,7 @@ export function viewItem(it, store, easyOn) {
   return { id: it.id, name: it.name, category: it.category, price: it.price, desc, options, rawOptions: it.options, extra, allergy, allergySource, source, review };
 }
 
-// v0.4: 알레르기 안내 상자 — 모든 모드·모든 단계에서 같은 문구(2차 모의 심사 D·E)
+// v0.4: 알레르기 안내 상자 — 모든 모드·모든 단계에서 같은 문구(2차 내부 점검 D·E)
 export function allergyBox(v) {
   if (v.allergySource === "매장 원문") return el("div", { class: "card allergy" }, el("b", {}, "알레르기 정보(매장 원문)"), el("div", {}, v.allergy));
   if (v.allergySource === "재료 낱말") return el("div", { class: "card allergy" }, el("b", {}, "알레르기 유발 성분"), el("div", {}, v.allergy),
@@ -172,7 +183,7 @@ export function allergyBox(v) {
     el("div", {}, "메뉴 설명에 알레르기 유발 성분이 적혀 있지 않아요. 걱정되면 「직원 부르기」로 물어보세요."));
 }
 
-// v0.5(3차 모의 심사 A·D·E P0): 결제 전 확인 화면의 품목마다 붙이는 알레르기 한 줄 — allergyBox와 같은 근거·같은 말
+// v0.5(3차 내부 점검 A·D·E P0): 결제 전 확인 화면의 품목마다 붙이는 알레르기 한 줄 — allergyBox와 같은 근거·같은 말
 export function allergyLine(v) {
   if (v.allergySource === "매장 원문") return `알레르기(매장 원문): ${v.allergy}`;
   if (v.allergySource === "재료 낱말") return `알레르기 유발 성분: ${v.allergy} (메뉴 설명의 재료로 표시 — 소스·시럽은 매장에 확인)`;
@@ -180,6 +191,23 @@ export function allergyLine(v) {
 }
 
 export const won = (n) => n.toLocaleString("ko-KR") + "원";
+
+// v0.6(3차 내부 점검 E·D): 옵션을 '○○ — 이렇게 할까요?' 대신 손님 말로 묻기(추가 금액은 「네」 단추에 따로). 낱말은 손님 화면에 보이는 옵션 글 그대로
+function eRo(word) { // 받침 없음·ㄹ → 로, 그 밖 → 으로
+  const h = [...word].reverse().find((ch) => ch >= "가" && ch <= "힣"); if (!h) return "로";
+  const j = (h.charCodeAt(0) - 0xac00) % 28; return j === 0 || j === 8 ? "로" : "으로";
+}
+function eUl(word) { const h = [...word].reverse().find((ch) => ch >= "가" && ch <= "힣"); if (!h) return "를"; return (h.charCodeAt(0) - 0xac00) % 28 ? "을" : "를"; }
+export function askOption(text) {
+  const t = String(text).replace(/\s*\+[\d,]+원\s*$/, "").trim();
+  let m;
+  if ((m = t.match(/^(.+?) ?(변경|바꾸기)$/))) return `${m[1]}${eRo(m[1])} 바꿀까요?`;
+  if ((m = t.match(/^(.+?) ?추가$/))) return `${m[1]}${eUl(m[1])} 더할까요?`;
+  if ((m = t.match(/^(.+?) ?(빼기|빼고)$/))) return `${m[1]}${eUl(m[1])} 뺄까요?`;
+  if ((m = t.match(/^(.+?) 드림$/))) return `${m[1]} 드릴까요?`;
+  if (/(게|이|히)$/.test(t)) return `${t} 할까요?`;
+  return `${t} — 이렇게 할까요?`;
+}
 
 // 읽어 주기(브라우저 내장 음성). 한국어 음성이 없는 기기도 있어 실패해도 화면은 그대로
 // 이 기기에 한국어 음성이 있는지(목록을 아직 못 받았으면 null)

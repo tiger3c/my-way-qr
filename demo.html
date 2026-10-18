@@ -11,14 +11,15 @@
   <h1>한 기기로 체험하기</h1>
   <p class="sub">매장 키오스크 화면과 손님 휴대폰 화면을 함께 보여 줍니다(큰 화면에서는 왼쪽이 키오스크·오른쪽이 휴대폰, 휴대폰에서는 위가 휴대폰·아래가 키오스크). 아래 단추로 '내 방식'을 바꿔 보세요. 같은 메뉴·같은 가격이 그 방식으로 바뀝니다.</p>
   <div class="row" id="presets" role="group" aria-label="내 방식 조합"></div>
+  <div id="demoNews" class="card notice demonews" role="status" hidden></div>
   <div class="demo" style="margin-top:12px">
     <iframe id="kiosk" title="키오스크 화면"></iframe>
     <div class="phoneframe"><iframe id="phone" title="휴대폰 화면"></iframe></div>
   </div>
-  <p class="foot">휴대폰 화면에서 주문을 끝내면 키오스크 화면에 주문이 도착하고, 키오스크가 자기 가격표로 합계를 다시 계산합니다(같은 기기 안에서만 — 두 기기 사이 전달은 실제 서비스에서 키오스크 쪽 연동이 맡습니다). <a href="index.html">처음으로</a></p>
+  <p class="foot">휴대폰 화면에서 「키오스크로 주문 보내기」를 누르면 키오스크 화면에 주문이 도착하고, 키오스크가 자기 메뉴판·가격표로 주문을 다시 만들어 주문 번호를 발급합니다. 이 화면은 같은 기기 안의 채널로 보내고, 실제 두 기기에서는 휴대폰에 뜬 <b>주문 QR</b>을 키오스크의 「주문 QR 읽기」(카메라 또는 사진)로 읽습니다 — 서버 없음. <a href="index.html">처음으로</a></p>
 </main>
 <script type="module">
-import { el } from "./js/common.js";
+import { el, channel } from "./js/common.js";
 let k = sessionStorage.getItem("mywayqr.kiosk");
 if (!k) { k = String(1000 + Math.floor(Math.random() * 9000)); sessionStorage.setItem("mywayqr.kiosk", k); }
 document.getElementById("kiosk").src = "kiosk.html";
@@ -42,6 +43,15 @@ PRESETS.forEach(([label, p], i) => {
   box.append(b);
 });
 go(PRESETS[2][1], box.children[2]);
+// v0.6(3차 내부 점검 B: 휴대폰에서 보내면 키오스크 도착 표시가 화면 밖) — 이 화면 맨 위에 '도착·번호' 소식(저절로 쪽을 옮기지는 않음)
+channel().addEventListener("message", (ev) => {
+  const m = ev.data || {};
+  if (m.type !== "issued") return;
+  const n = document.getElementById("demoNews");
+  n.hidden = false;
+  n.replaceChildren(el("b", {}, `키오스크에 주문이 도착했어요 — 주문 번호 ${String(m.no).slice(0, 8)}`), " ",
+    el("button", { type: "button", class: "ghost", onclick: () => document.getElementById("kiosk").scrollIntoView({ behavior: "smooth", block: "start" }) }, "키오스크 화면 보기"));
+});
 </script>
 </body>
 </html>

@@ -8,8 +8,8 @@
 </head>
 <body>
 <main class="wrap wide">
-  <h1>매장 운영자 화면 — AI 쉬운 말 만들기</h1>
-  <p class="sub">메뉴를 등록할 때 <b>한 번</b> AI가 설명·옵션 이름을 쉬운 말로 바꾸고, 규칙 검사를 통과한 것만 <b>승인 대기</b>로 저장합니다. 운영자가 원문과 나란히 보고 <b>승인한 것만</b> 손님 화면에 나갑니다. 손님 휴대폰은 저장된 결과를 바로 씁니다(손님 쪽에서 AI를 돌리지 않음).</p>
+  <h1>매장 운영자 화면 — AI 화면 구성안 · 쉬운 말 만들기</h1>
+  <p class="sub">메뉴판을 처음 등록할 때 AI가 <b>두 가지</b>를 만듭니다. ① <a href="#plans">화면 구성안</a> — 손님 기능 조합 64가지마다 목록·설명·옵션 묻는 방식·글씨·단추 크기·읽어 줄 것·안내 한 줄을 정하고, 코드가 검증·보정해 조합별로 저장합니다(사전질의 답변서2 2번 '최초 적용 시 AI로 각 조건별 화면'). ② 쉬운 말 — 메뉴를 등록할 때 <b>한 번</b> AI가 설명·옵션 이름을 쉬운 말로 바꾸고, 규칙 검사를 통과한 것만 <b>승인 대기</b>로 저장합니다. 운영자가 원문과 나란히 보고 <b>승인한 것만</b> 손님 화면에 나갑니다. 손님 휴대폰은 저장된 결과를 바로 씁니다(손님 쪽에서 AI를 돌리지 않음).</p>
   <div class="card notice" id="demoNote">이 시연 매장의 저장본(AI 쉬운 말 <span id="nAI"></span>개)은 <b>사람이 승인하지 않은 시연용</b>입니다 — 손님 화면에도 「시연용 — 사람 승인 없음」으로 표시됩니다. 아래 표에서 직접 승인·반려해 보거나, 「승인한 것만 손님 화면에」를 켜 실제 운영 방식으로 볼 수 있습니다(승인 기록은 이 브라우저에만 저장).</div>
   <label class="toggle"><span><b>승인한 것만 손님 화면에</b><br><span class="sub small">켜면 승인하지 않은 AI 쉬운 말은 손님 화면에서 빠지고 매장 설명 바탕(쉬운 낱말 치환)이 나갑니다</span></span><input type="checkbox" id="strict"></label>
 
@@ -24,7 +24,26 @@
   <p class="sub small" id="how"></p>
   <div style="overflow-x:auto"><table id="tbl"><thead><tr><th>메뉴</th><th>원문(매장 설명·옵션)</th><th>AI 쉬운 말(승인 대상)</th><th>승인</th><th>손님에게 보이는 설명(쉬운 말 켬)</th><th>걸린 규칙</th></tr></thead><tbody></tbody></table></div>
 
-  <h2>규칙 검사 직접 해 보기</h2>
+
+  <h2 id="plans">AI 화면 구성안 — 손님 기능 조합 64가지</h2>
+  <p class="sub small" id="planhow"></p>
+  <div class="card">
+    <div class="row"><label for="planCombo" class="sub small">조합</label><select id="planCombo" style="font:inherit; min-height:var(--btn-h)"></select>
+      <a id="planOpen" class="btn ghost" href="#" target="_blank" rel="noopener">손님 화면으로 보기</a>
+      <button id="planRun" type="button" disabled>브라우저 AI로 이 조합 다시 만들기(시험 기능)</button></div>
+    <div id="planView" class="live" aria-live="polite"></div>
+  </div>
+  <details class="card"><summary><b>64가지 모두 보기(표)</b></summary>
+    <div style="overflow-x:auto"><table id="plantbl"><thead><tr><th>기능 조합</th><th>판정</th><th>글씨·단추</th><th>목록</th><th>설명</th><th>옵션</th><th>읽기</th><th>안내 한 줄</th><th>코드가 고친 것</th></tr></thead><tbody></tbody></table></div>
+  </details>
+  <h2>화면 구성안 검사 직접 해 보기</h2>
+  <div class="card">
+    <p class="sub small">조합을 고르고 구성안 JSON을 고쳐 보세요(예: 큰 글씨인데 글씨 100%, 읽어 주기인데 알레르기를 빼기, 안내 문장에 '어르신'). 코드가 무엇을 고치는지 바로 보여 줍니다(AI 없이 동작).</p>
+    <p><textarea id="planTry" rows="5" style="width:100%; font:inherit; font-size:0.85em; padding:8px; border-radius:10px"></textarea></p>
+    <button id="planTryBtn" type="button">구성안 검사</button>
+    <div id="planTryOut" class="live" aria-live="polite"></div>
+  </div>
+  <h2>쉬운 말 규칙 검사 직접 해 보기</h2>
   <div class="card">
     <p class="sub small">메뉴를 고르고 쉬운 말 설명을 직접 고쳐 넣어 보세요. AI가 이렇게 쓰면 어떤 규칙에 걸리는지 바로 보여 줍니다(AI 없이도 동작).</p>
     <div class="row"><select id="pickItem" style="font:inherit; min-height:var(--btn-h)"></select></div>
@@ -33,11 +52,12 @@
     <button id="tryBtn" type="button">규칙 검사</button>
     <div id="tryOut" class="live" aria-live="polite"></div>
   </div>
-  <p class="foot">모델: Qwen2.5-1.5B-Instruct(Apache-2.0) · 실행: WebLLM 0.2.86(Apache-2.0, WebGPU) · 규칙(v0.5): 원문·용어 사전·조립 낱말에 없는 낱말 차단(닫힌 낱말 목록), 옵션 이름은 정해진 쉬운 말과 글자 그대로, 숫자·수량(아라비아·한글 수사)이 원문과 같아야 함, 원문 재료 빠짐, 알레르기 성분을 빼거나 줄이거나 바꾸는 말, 원문에 없는 건강·질병·효능·식이·안심·가격·순위·맛·원산지·신선도 주장, 빠진 카페인 정보, 온도 함정, 지어낸 조리법, 옵션 개수·뜻, 명령문, 길이, 특수 문자. 규칙은 시험 문장에 맞춰 고쳐 온 것이라 처음 보는 오답은 일부만 막습니다 — 고치기 전에 처음 본 틀린 문장은 세트에 따라 44~92%만 막았습니다(v0.4 규칙, 작성자가 다른 두 세트 — 모의 심사위원 역할의 AI 페르소나 5명이 쓴 134개 · 규칙을 만든 Claude가 쓴 24개, 사람이 쓴 시험은 아직 없음). v0.5는 고칠 때 본 세트에서만 재어(98~100%) 실력보다 높게 나옵니다. 맞는 문장도 세트에 따라 6~21%를 막아 원문 유지로 돌립니다. 지금 표의 결과는 같은 모델을 개발 PC CPU(llama.cpp)에서 돌린 것이고, 사람이 승인하지 않은 시연용입니다. <a href="index.html">처음으로</a></p>
+  <p class="foot">모델: Qwen2.5-1.5B-Instruct(Apache-2.0) · 실행: WebLLM 0.2.86(Apache-2.0, WebGPU) · 규칙(v0.5): 원문·용어 사전·조립 낱말에 없는 낱말 차단(닫힌 낱말 목록), 옵션 이름은 정해진 쉬운 말과 글자 그대로, 숫자·수량(아라비아·한글 수사)이 원문과 같아야 함, 원문 재료 빠짐, 알레르기 성분을 빼거나 줄이거나 바꾸는 말, 원문에 없는 건강·질병·효능·식이·안심·가격·순위·맛·원산지·신선도 주장, 빠진 카페인 정보, 온도 함정, 지어낸 조리법, 옵션 개수·뜻, 명령문, 길이, 특수 문자. 규칙은 시험 문장에 맞춰 고쳐 온 것이라 처음 보는 오답은 일부만 막습니다 — 고치기 전에 처음 본 틀린 문장은 세트에 따라 44~92%만 막았습니다(v0.4 규칙, 작성자가 다른 두 세트 — 내부 점검위원 역할의 AI 페르소나 5명이 쓴 134개 · 규칙을 만든 Claude가 쓴 24개, 사람이 쓴 시험은 아직 없음). v0.5는 고칠 때 본 세트에서만 재어(98~100%) 실력보다 높게 나옵니다. 맞는 문장도 세트에 따라 6~21%를 막아 원문 유지로 돌립니다. 지금 표의 결과는 같은 모델을 개발 PC CPU(llama.cpp)에서 돌린 것이고, 사람이 승인하지 않은 시연용입니다. <a href="index.html">처음으로</a></p>
 </main>
 <script type="module">
 import { loadStore, viewItem, reviewOf, saveReview, el } from "./js/common.js";
 import { checkEasy, tidy, SYSTEM, EX_IN, EX_OUT, SCHEMA, hints } from "./js/rules.js";
+import { allCombos, comboKey, CODE_KO, storeSummary, validatePlan, planFor, PLAN_SYSTEM, PLAN_SCHEMA, PLAN_EX, planUserMessage } from "./js/plan.js";
 const store = await loadStore();
 const items = store.menu.items;
 const result = Object.fromEntries(store.easy.rows.map((r) => [r.id, { ...r }]));
@@ -47,7 +67,7 @@ const tbody = document.querySelector("#tbl tbody");
 const strictBox = document.getElementById("strict");
 strictBox.checked = !!store.review.strict;
 strictBox.onchange = () => { store.review.strict = strictBox.checked; saveReview(store.review); drawTable(); };
-// v0.5(3차 모의 심사 A·C·D): 승인 — 그 글자 그대로에 묶어 이 브라우저에 저장(글이 바뀌면 다시 승인 필요)
+// v0.5(3차 내부 점검 A·C·D): 승인 — 그 글자 그대로에 묶어 이 브라우저에 저장(글이 바뀌면 다시 승인 필요)
 function mark(id, row, state) {
   if (state) store.review.ids[id] = { state, desc: row.easy_desc, options: row.easy_options || null, at: new Date().toISOString().slice(0, 16) };
   else delete store.review.ids[id];
@@ -59,7 +79,7 @@ function drawTable() {
     const rv = reviewOf(it.id, store);
     const cand = rv.pending && rv.pending.used === "AI" && rv.state !== "승인" ? rv.pending : rv.row; // 승인 대기인 새 변환이 있으면 그것이 승인 대상
     const state = cand && cand === rv.pending && rv.state !== "승인" && rv.state !== "반려" ? "승인 대기" : rv.state;
-    // v0.4(2차 모의 심사 C): 실제 손님 화면(쉬운 말 켬)과 같은 글 — 원문 유지 항목은 사전 치환본 또는 매장 원문
+    // v0.4(2차 내부 점검 C): 실제 손님 화면(쉬운 말 켬)과 같은 글 — 원문 유지 항목은 사전 치환본 또는 매장 원문
     const v = viewItem(it, store, true);
     const approveCell = cand ? el("td", {}, el("div", { class: "tag " + (state === "승인" ? "ai" : "orig") }, state || "—"),
       el("div", { class: "row" },
@@ -86,7 +106,7 @@ if (!adapter) {
 } else {
   gpuBox.classList.remove("notice");
   const f16 = adapter.features && adapter.features.has("shader-f16");
-  MODEL = f16 ? "Qwen2.5-1.5B-Instruct-q4f16_1-MLC" : "Qwen2.5-1.5B-Instruct-q4f32_1-MLC"; // v0.4(2차 모의 심사 C): f16이 없는 기기는 q4f32
+  MODEL = f16 ? "Qwen2.5-1.5B-Instruct-q4f16_1-MLC" : "Qwen2.5-1.5B-Instruct-q4f32_1-MLC"; // v0.4(2차 내부 점검 C): f16이 없는 기기는 q4f32
   gpuBox.textContent = `WebGPU 사용 가능(${f16 ? "f16" : "f16 없음 → q4f32"}) — 버튼을 누르면 모델(약 1~1.9GB)을 한 번 내려받아 브라우저 안에서 변환합니다. 메뉴 내용은 서버로 보내지 않습니다. (이 기능은 아직 실행 기록이 없는 시험 기능입니다)`;
   document.getElementById("run").disabled = false;
 }
@@ -134,7 +154,67 @@ document.getElementById("dl").onclick = () => {
   document.body.append(a); a.click(); a.remove();
 };
 
-// 규칙 검사 직접 해 보기
+
+// ---- v0.6 AI 화면 구성안 ----
+const summary = storeSummary(store.menu);
+const plans = store.plans;
+const planHow = document.getElementById("planhow");
+if (plans) {
+  planHow.textContent = `${plans.made} · ${plans.how} · 64가지 중 검증 통과 ${plans.summary.통과} · 보정 ${plans.summary.보정} · 기본 구성 ${plans.summary.기본} · ${plans.review}`;
+} else planHow.textContent = "저장된 화면 구성안이 없어 손님 화면은 코드의 기본 구성을 씁니다.";
+const comboSel = document.getElementById("planCombo");
+const labelOf = (codes) => codes.length ? codes.map((c) => CODE_KO[c]).join(" + ") : "기본 화면(기능 없음)";
+for (const c of allCombos()) comboSel.append(el("option", { value: comboKey(c) }, `${labelOf(c)}`));
+const codesOf = (key) => key === "기본" ? [] : key.split(".");
+const fmt = (p) => p ? `글씨 ${p.text_pct}% · 단추 ${p.button_pct}% · 목록 ${p.list_show}·한 쪽 ${p.per_page}개 · 설명 ${p.detail} · 옵션 ${p.options}${p.read && p.read.length ? " · 읽기 " + p.read.join("·") : ""}` : "—";
+function showPlan(key, override) {
+  const codes = codesOf(key);
+  const row = override || (plans && plans.rows[key]) || null;
+  const used = planFor(plans, codes);
+  document.getElementById("planOpen").href = `order.html?store=${store.menu.store_id}&k=0000&t=${Date.now()}#p=${codes.join(".")}`;
+  const v = document.getElementById("planView");
+  v.replaceChildren(
+    el("p", {}, el("b", {}, labelOf(codes)), " — ", el("span", { class: "tag " + (String(row ? row.verdict : used.verdict).includes("통과") ? "ai" : "orig") }, row ? row.verdict : used.verdict)),
+    el("div", { class: "row", style: "align-items:flex-start" },
+      el("div", { class: "grow card", style: "min-width:280px" }, el("b", {}, "AI가 낸 구성안(그대로)"), el("pre", { class: "small", style: "white-space:pre-wrap" }, row && row.raw ? JSON.stringify(row.raw, null, 1) : "—")),
+      el("div", { class: "grow card", style: "min-width:280px" }, el("b", {}, "손님 화면에 쓰는 구성안(검증·보정 뒤)"), el("p", { class: "small" }, fmt(row ? row.plan : used.plan)), el("p", { class: "small" }, "안내 한 줄: ", (row ? row.plan : used.plan).greeting || "—"),
+        el("b", { class: "small" }, "코드가 고친 것"), el("ul", { class: "small" }, ...((row ? row.fixes : used.fixes) || []).map((f) => el("li", {}, f))), (row && row.fixes && row.fixes.length) ? null : el("p", { class: "sub small" }, "없음"))));
+  document.getElementById("planTry").value = JSON.stringify(row && row.raw ? row.raw : used.plan, null, 1);
+  document.getElementById("planTryOut").textContent = "";
+}
+comboSel.onchange = () => showPlan(comboSel.value);
+comboSel.value = "BIG.TOUCH"; showPlan("BIG.TOUCH");
+if (plans) document.querySelector("#plantbl tbody").replaceChildren(...allCombos().map((c) => {
+  const r = plans.rows[comboKey(c)];
+  return el("tr", { "data-combo": comboKey(c) }, el("td", {}, labelOf(c)), el("td", { class: "small" }, r.verdict), el("td", {}, `${r.plan.text_pct}% · ${r.plan.button_pct}%`),
+    el("td", { class: "small" }, `${r.plan.list_show} · ${r.plan.per_page}개`), el("td", {}, r.plan.detail), el("td", {}, r.plan.options),
+    el("td", { class: "small" }, r.plan.read.join("·") || "—"), el("td", { class: "small" }, r.plan.greeting), el("td", { class: "small sub" }, r.fixes.join(" / ") || "—"));
+}));
+document.getElementById("planTryBtn").onclick = () => {
+  const out = document.getElementById("planTryOut");
+  let raw = null; try { raw = JSON.parse(document.getElementById("planTry").value); } catch (e) { raw = null; }
+  const r = validatePlan(raw, codesOf(comboSel.value), summary);
+  out.replaceChildren(el("div", { class: "card " + (r.fixes.length ? "allergy" : "") }, el("b", {}, r.verdict), el("p", { class: "small" }, fmt(r.plan)),
+    r.fixes.length ? el("ul", { class: "small" }, ...r.fixes.map((f) => el("li", {}, f))) : el("p", { class: "small" }, "고칠 것 없음 — 이대로 저장됩니다")));
+};
+document.getElementById("planRun").disabled = !adapter;
+document.getElementById("planRun").onclick = async () => {
+  const btn = document.getElementById("planRun"); btn.disabled = true;
+  const key = comboSel.value, codes = codesOf(key);
+  try {
+    if (!engine) { const webllm = await import("https://esm.run/@mlc-ai/web-llm@0.2.86"); engine = await webllm.CreateMLCEngine(MODEL, { initProgressCallback: (r) => (prog.textContent = r.text) }); }
+    const msgs = [{ role: "system", content: PLAN_SYSTEM }];
+    for (const ex of PLAN_EX) msgs.push({ role: "user", content: planUserMessage(summary, ex.codes) }, { role: "assistant", content: JSON.stringify(ex.out) });
+    msgs.push({ role: "user", content: planUserMessage(summary, codes) });
+    const r = await engine.chat.completions.create({ messages: msgs, response_format: { type: "json_object", schema: JSON.stringify(PLAN_SCHEMA) }, temperature: 0.3, max_tokens: 220 });
+    let raw = null; try { raw = JSON.parse(r.choices[0].message.content); } catch (e) { raw = null; }
+    const v = validatePlan(raw, codes, summary);
+    showPlan(key, { raw, plan: v.plan, fixes: v.fixes, verdict: v.verdict + " · 브라우저 실행(저장 안 함)" });
+  } catch (e) { document.getElementById("planView").prepend(el("p", { class: "sub" }, "브라우저 AI 실행 실패: " + (e && e.message ? e.message : e))); }
+  btn.disabled = false;
+};
+
+// 쉬운 말 규칙 검사 직접 해 보기
 const pick = document.getElementById("pickItem");
 items.forEach((it) => pick.append(el("option", { value: it.id }, `${it.name} — ${it.desc}`)));
 function loadTry() {

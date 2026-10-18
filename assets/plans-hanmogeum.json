@@ -1,0 +1,2563 @@
+{
+ "store_id": "hanmogeum",
+ "made": "2026-10-18 23:29",
+ "model": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+ "prompt_ver": "v3",
+ "rules": "plan v0.6(app/js/plan.js validatePlan)",
+ "how": "기능 조합 64가지마다 qwen2.5-1.5b-instruct-q4_k_m.gguf(개발 PC CPU, llama.cpp, 문법 제약 JSON)이 화면 구성안을 만들고 → 코드가 검증·보정(기능별 최소 기준·안내 문장 검사) → 조합별 저장. 손님 화면은 저장본을 쓰고, 그릴 때 실제 높이를 재서 「담기」가 화면 밖이면 그 자리에서 설명을 접고 그래도 넘치면 하나씩 묻는다(실행 중 보정)",
+ "review": "시연용 — 사람 승인 없음(운영자 화면에서 승인 가능)",
+ "summary": {
+  "combos": 64,
+  "통과": 27,
+  "보정": 37,
+  "기본": 0,
+  "sec_total": 948.4
+ },
+ "fix_kinds": {
+  "큰 글씨인데 글씨 N → N": 2,
+  "안내 문장(고르지 않은 기능(한 화면에 한 가지씩)을 말함) → 기본 문장": 1,
+  "안내 문장('-요'로 끝나지 않음) → 기본 문장": 2,
+  "안내 문장(길이 N자 넘음, 고르지 않은 기능(큰 버튼)을 말함) → 기본 문장": 3,
+  "안내 문장(길이 N자 넘음) → 기본 문장": 7,
+  "큰 버튼을 고르지 않았는데 단추 N → N": 5,
+  "큰 버튼인데 단추 N → N": 1,
+  "안내 문장(길이 N자 넘음, '-요'로 끝나지 않음) → 기본 문장": 9,
+  "큰 글씨를 고르지 않았는데 글씨 N → N": 2,
+  "한 화면에 한 가지씩인데 한 쪽 N → N": 18,
+  "한 화면에 한 가지씩인데 옵션을 한 화면에 모두 → 하나씩": 9,
+  "안내 문장(길이 N자 넘음, '-요'로 끝나지 않음, 고르지 않은 기능(큰 버튼)을 말함) → 기본 문장": 1
+ },
+ "store_summary": {
+  "store": "카페 한모금(가상)",
+  "store_id": "hanmogeum",
+  "items": 30,
+  "categories": 4,
+  "max_per_category": 10,
+  "max_options": 3,
+  "longest_desc_chars": 39,
+  "avg_desc_chars": 23,
+  "choose_one_items": 11
+ },
+ "rows": {
+  "기본": {
+   "codes": [],
+   "raw": {
+    "list_show": "이름·가격·설명",
+    "per_page": 10,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 100,
+    "button_pct": 100,
+    "read": [],
+    "greeting": "매장 메뉴를 그대로 보여 드려요. 필요하면 내 방식을 바꿀 수 있어요."
+   },
+   "plan": {
+    "list_show": "이름·가격·설명",
+    "per_page": 10,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 100,
+    "button_pct": 100,
+    "read": [],
+    "greeting": "매장 메뉴를 그대로 보여 드려요. 필요하면 내 방식을 바꿀 수 있어요."
+   },
+   "fixes": [],
+   "verdict": "AI 구성안(검증 통과)",
+   "sec": 39.3
+  },
+  "BIG": {
+   "codes": [
+    "BIG"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 5,
+    "detail": "접기",
+    "options": "한 화면에 모두",
+    "text_pct": 100,
+    "button_pct": 100,
+    "read": [],
+    "greeting": "큰 글씨로 보여 드리고, 설명은 '설명 보기'를 누르세요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 5,
+    "detail": "접기",
+    "options": "한 화면에 모두",
+    "text_pct": 140,
+    "button_pct": 100,
+    "read": [],
+    "greeting": "큰 글씨로 보여 드리고, 설명은 '설명 보기'를 누르세요."
+   },
+   "fixes": [
+    "큰 글씨인데 글씨 100% → 140%"
+   ],
+   "verdict": "AI 구성안(보정 1)",
+   "sec": 14.2
+  },
+  "HC": {
+   "codes": [
+    "HC"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "접기",
+    "options": "한 화면에 모두",
+    "text_pct": 100,
+    "button_pct": 100,
+    "read": [],
+    "greeting": "또렷한 색을 골랐어요. 설명은 '설명 보기'를 누르세요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "접기",
+    "options": "한 화면에 모두",
+    "text_pct": 100,
+    "button_pct": 100,
+    "read": [],
+    "greeting": "또렷한 색을 골랐어요. 설명은 '설명 보기'를 누르세요."
+   },
+   "fixes": [],
+   "verdict": "AI 구성안(검증 통과)",
+   "sec": 10.9
+  },
+  "BIG.HC": {
+   "codes": [
+    "BIG",
+    "HC"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 글씨와 또렷한 색을 골랐어요. 설명은 '설명 보기'를 누르세요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 글씨와 또렷한 색을 골랐어요. 설명은 '설명 보기'를 누르세요."
+   },
+   "fixes": [],
+   "verdict": "AI 구성안(검증 통과)",
+   "sec": 13.3
+  },
+  "EASY": {
+   "codes": [
+    "EASY"
+   ],
+   "raw": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 100,
+    "read": [],
+    "greeting": "쉬운 말로 보여 드리고, 고를 것은 하나씩 물어볼게요."
+   },
+   "plan": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 100,
+    "read": [],
+    "greeting": "쉬운 말로 보여 드릴게요."
+   },
+   "fixes": [
+    "안내 문장(고르지 않은 기능(한 화면에 한 가지씩)을 말함) → 기본 문장"
+   ],
+   "verdict": "AI 구성안(보정 1)",
+   "sec": 14.1
+  },
+  "BIG.EASY": {
+   "codes": [
+    "BIG",
+    "EASY"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 5,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 글씨와 쉬운 말을 크게 했어요. 설명은 '설명 보기'를 누르세요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 5,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 글씨와 쉬운 말을 크게 했어요. 설명은 '설명 보기'를 누르세요."
+   },
+   "fixes": [],
+   "verdict": "AI 구성안(검증 통과)",
+   "sec": 12.2
+  },
+  "HC.EASY": {
+   "codes": [
+    "HC",
+    "EASY"
+   ],
+   "raw": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 120,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "또렷한 색으로 보여 드리고, 쉬운 말로 설명해 드릴게요."
+   },
+   "plan": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 120,
+    "read": [],
+    "greeting": "또렷한 색으로 보여 드리고, 쉬운 말로 설명해 드릴게요."
+   },
+   "fixes": [],
+   "verdict": "AI 구성안(검증 통과)",
+   "sec": 15.9
+  },
+  "BIG.HC.EASY": {
+   "codes": [
+    "BIG",
+    "HC",
+    "EASY"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨와 색을 바꾼 것에 대해 설명드리고, 쉬운 말로 보여 드리겠습니다."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 글씨, 또렷한 색, 쉬운 말로 보여 드릴게요."
+   },
+   "fixes": [
+    "안내 문장('-요'로 끝나지 않음) → 기본 문장"
+   ],
+   "verdict": "AI 구성안(보정 1)",
+   "sec": 15.6
+  },
+  "VOICE": {
+   "codes": [
+    "VOICE"
+   ],
+   "raw": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 110,
+    "button_pct": 100,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "읽어 주기를 천천히 해요."
+   },
+   "plan": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 110,
+    "button_pct": 100,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "읽어 주기를 천천히 해요."
+   },
+   "fixes": [],
+   "verdict": "AI 구성안(검증 통과)",
+   "sec": 12.5
+  },
+  "BIG.VOICE": {
+   "codes": [
+    "BIG",
+    "VOICE"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨와 큰 버튼을 골랐어요. 설명은 '설명 보기'를 누르세요. 읽어 주기를 천천히 하세요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨, 읽어 주기로 보여 드릴게요."
+   },
+   "fixes": [
+    "안내 문장(길이 50자 넘음, 고르지 않은 기능(큰 버튼)을 말함) → 기본 문장"
+   ],
+   "verdict": "AI 구성안(보정 1)",
+   "sec": 14.2
+  },
+  "HC.VOICE": {
+   "codes": [
+    "HC",
+    "VOICE"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 100,
+    "button_pct": 100,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "또렷한 색을 골랐어요. 설명은 '설명 보기'를 누르세요. 천천히 읽어 드릴게요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 100,
+    "button_pct": 100,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "또렷한 색을 골랐어요. 설명은 '설명 보기'를 누르세요. 천천히 읽어 드릴게요."
+   },
+   "fixes": [],
+   "verdict": "AI 구성안(검증 통과)",
+   "sec": 14.2
+  },
+  "BIG.HC.VOICE": {
+   "codes": [
+    "BIG",
+    "HC",
+    "VOICE"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨와 색을 크게 했어요. 설명은 '설명 보기'를 누르세요. 읽어 주기를 천천히 하세요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨, 또렷한 색, 읽어 주기로 보여 드릴게요."
+   },
+   "fixes": [
+    "안내 문장(길이 50자 넘음) → 기본 문장"
+   ],
+   "verdict": "AI 구성안(보정 1)",
+   "sec": 13.8
+  },
+  "EASY.VOICE": {
+   "codes": [
+    "EASY",
+    "VOICE"
+   ],
+   "raw": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 110,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "쉬운 말로 보여 드리고, 천천히 읽어 드릴게요."
+   },
+   "plan": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 110,
+    "button_pct": 120,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "쉬운 말로 보여 드리고, 천천히 읽어 드릴게요."
+   },
+   "fixes": [
+    "큰 버튼을 고르지 않았는데 단추 160% → 120%"
+   ],
+   "verdict": "AI 구성안(보정 1)",
+   "sec": 13.5
+  },
+  "BIG.EASY.VOICE": {
+   "codes": [
+    "BIG",
+    "EASY",
+    "VOICE"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨와 작은 버튼을 크게 했어요. 설명은 '설명 보기'를 누르세요. 읽어 주기는 천천히 읽어 드릴게요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨, 쉬운 말, 읽어 주기로 보여 드릴게요."
+   },
+   "fixes": [
+    "안내 문장(길이 50자 넘음, 고르지 않은 기능(큰 버튼)을 말함) → 기본 문장"
+   ],
+   "verdict": "AI 구성안(보정 1)",
+   "sec": 15
+  },
+  "HC.EASY.VOICE": {
+   "codes": [
+    "HC",
+    "EASY",
+    "VOICE"
+   ],
+   "raw": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "또렷한 색으로 보여 드리고, 천천히 읽어 드릴게요."
+   },
+   "plan": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 120,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "또렷한 색으로 보여 드리고, 천천히 읽어 드릴게요."
+   },
+   "fixes": [
+    "큰 버튼을 고르지 않았는데 단추 160% → 120%"
+   ],
+   "verdict": "AI 구성안(보정 1)",
+   "sec": 12.2
+  },
+  "BIG.HC.EASY.VOICE": {
+   "codes": [
+    "BIG",
+    "HC",
+    "EASY",
+    "VOICE"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨와 색을 크게 했어요. 설명은 '설명 보기'를 누르세요. 읽어 주기는 천천히 해요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨와 색을 크게 했어요. 설명은 '설명 보기'를 누르세요. 읽어 주기는 천천히 해요."
+   },
+   "fixes": [],
+   "verdict": "AI 구성안(검증 통과)",
+   "sec": 14.2
+  },
+  "TOUCH": {
+   "codes": [
+    "TOUCH"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 5,
+    "detail": "접기",
+    "options": "한 화면에 모두",
+    "text_pct": 100,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 버튼을 골랐어요. 설명은 접기로 하였습니다."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 5,
+    "detail": "접기",
+    "options": "한 화면에 모두",
+    "text_pct": 100,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 버튼으로 보여 드릴게요."
+   },
+   "fixes": [
+    "안내 문장('-요'로 끝나지 않음) → 기본 문장"
+   ],
+   "verdict": "AI 구성안(보정 1)",
+   "sec": 8.5
+  },
+  "BIG.TOUCH": {
+   "codes": [
+    "BIG",
+    "TOUCH"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 100,
+    "button_pct": 100,
+    "read": [],
+    "greeting": "큰 글씨와 버튼을 크게 했어요. 설명은 '설명 보기'를 누르세요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 140,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 글씨와 버튼을 크게 했어요. 설명은 '설명 보기'를 누르세요."
+   },
+   "fixes": [
+    "큰 글씨인데 글씨 100% → 140%",
+    "큰 버튼인데 단추 100% → 160%"
+   ],
+   "verdict": "AI 구성안(보정 2)",
+   "sec": 9.4
+  },
+  "HC.TOUCH": {
+   "codes": [
+    "HC",
+    "TOUCH"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 100,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "또렷한 색으로 보여 드리고, 큰 버튼을 골랐어요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 100,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "또렷한 색으로 보여 드리고, 큰 버튼을 골랐어요."
+   },
+   "fixes": [],
+   "verdict": "AI 구성안(검증 통과)",
+   "sec": 9.8
+  },
+  "BIG.HC.TOUCH": {
+   "codes": [
+    "BIG",
+    "HC",
+    "TOUCH"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 글씨와 색을 크게 했어요. 큰 버튼을 골랐어요. 설명은 '설명 보기'를 누르세요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 글씨와 색을 크게 했어요. 큰 버튼을 골랐어요. 설명은 '설명 보기'를 누르세요."
+   },
+   "fixes": [],
+   "verdict": "AI 구성안(검증 통과)",
+   "sec": 10.5
+  },
+  "EASY.TOUCH": {
+   "codes": [
+    "EASY",
+    "TOUCH"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 110,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "쉬운 말로 보여 드리고, 큰 버튼을 눌러보세요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 110,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "쉬운 말로 보여 드리고, 큰 버튼을 눌러보세요."
+   },
+   "fixes": [],
+   "verdict": "AI 구성안(검증 통과)",
+   "sec": 8.9
+  },
+  "BIG.EASY.TOUCH": {
+   "codes": [
+    "BIG",
+    "EASY",
+    "TOUCH"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 5,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 글씨와 큰 버튼을 크게 했어요. 설명은 '설명 보기'를 누르세요. 쉬운 말로 보여 드리고, 고를 것은 한"
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 5,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 글씨, 쉬운 말, 큰 버튼으로 보여 드릴게요."
+   },
+   "fixes": [
+    "안내 문장(길이 50자 넘음, '-요'로 끝나지 않음) → 기본 문장"
+   ],
+   "verdict": "AI 구성안(보정 1)",
+   "sec": 11.4
+  },
+  "HC.EASY.TOUCH": {
+   "codes": [
+    "HC",
+    "EASY",
+    "TOUCH"
+   ],
+   "raw": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "또렷한 색으로 보여 드리고, 쉬운 말로 설명을 보여 드릴게요. 큰 버튼을 골랐어요."
+   },
+   "plan": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "또렷한 색으로 보여 드리고, 쉬운 말로 설명을 보여 드릴게요. 큰 버튼을 골랐어요."
+   },
+   "fixes": [],
+   "verdict": "AI 구성안(검증 통과)",
+   "sec": 14.1
+  },
+  "BIG.HC.EASY.TOUCH": {
+   "codes": [
+    "BIG",
+    "HC",
+    "EASY",
+    "TOUCH"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 글씨와 색을 바꿨어요. 버튼은 크게 했어요. 설명은 '설명 보기'를 누르세요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 글씨와 색을 바꿨어요. 버튼은 크게 했어요. 설명은 '설명 보기'를 누르세요."
+   },
+   "fixes": [],
+   "verdict": "AI 구성안(검증 통과)",
+   "sec": 11.1
+  },
+  "VOICE.TOUCH": {
+   "codes": [
+    "VOICE",
+    "TOUCH"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 5,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 100,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "읽어 주기를 천천히 해 주세요. 큰 버튼을 골랐어요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 5,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 100,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "읽어 주기를 천천히 해 주세요. 큰 버튼을 골랐어요."
+   },
+   "fixes": [],
+   "verdict": "AI 구성안(검증 통과)",
+   "sec": 12.3
+  },
+  "BIG.VOICE.TOUCH": {
+   "codes": [
+    "BIG",
+    "VOICE",
+    "TOUCH"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨와 버튼을 크게 했어요. 설명은 '설명 보기'를 누르세요. 천천히 읽어 드릴게요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨와 버튼을 크게 했어요. 설명은 '설명 보기'를 누르세요. 천천히 읽어 드릴게요."
+   },
+   "fixes": [],
+   "verdict": "AI 구성안(검증 통과)",
+   "sec": 13.5
+  },
+  "HC.VOICE.TOUCH": {
+   "codes": [
+    "HC",
+    "VOICE",
+    "TOUCH"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "또렷한 색으로 보여 드리고, 천천히 읽어 드릴게요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 110,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "또렷한 색으로 보여 드리고, 천천히 읽어 드릴게요."
+   },
+   "fixes": [
+    "큰 글씨를 고르지 않았는데 글씨 150% → 110%"
+   ],
+   "verdict": "AI 구성안(보정 1)",
+   "sec": 12.3
+  },
+  "BIG.HC.VOICE.TOUCH": {
+   "codes": [
+    "BIG",
+    "HC",
+    "VOICE",
+    "TOUCH"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨와 색을 크게 했어요. 버튼을 크게 했어요. 설명은 '설명 보기'를 누르세요. 읽어 주기를 천천히 하"
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨, 또렷한 색, 읽어 주기, 큰 버튼으로 보여 드릴게요."
+   },
+   "fixes": [
+    "안내 문장(길이 50자 넘음, '-요'로 끝나지 않음) → 기본 문장"
+   ],
+   "verdict": "AI 구성안(보정 1)",
+   "sec": 15.2
+  },
+  "EASY.VOICE.TOUCH": {
+   "codes": [
+    "EASY",
+    "VOICE",
+    "TOUCH"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 110,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "쉬운 말로 보여 드리고, 천천히 읽어 드릴게요. 큰 버튼을 골랐어요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 110,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "쉬운 말로 보여 드리고, 천천히 읽어 드릴게요. 큰 버튼을 골랐어요."
+   },
+   "fixes": [],
+   "verdict": "AI 구성안(검증 통과)",
+   "sec": 13.5
+  },
+  "BIG.EASY.VOICE.TOUCH": {
+   "codes": [
+    "BIG",
+    "EASY",
+    "VOICE",
+    "TOUCH"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨와 큰 버튼을 크게 했어요. 쉬운 말로 보여 드리고, 읽어 주기를 천천히 해요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨와 큰 버튼을 크게 했어요. 쉬운 말로 보여 드리고, 읽어 주기를 천천히 해요."
+   },
+   "fixes": [],
+   "verdict": "AI 구성안(검증 통과)",
+   "sec": 15.4
+  },
+  "HC.EASY.VOICE.TOUCH": {
+   "codes": [
+    "HC",
+    "EASY",
+    "VOICE",
+    "TOUCH"
+   ],
+   "raw": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "또렷한 색으로 보여 드리고, 쉬운 말로 보여 드리고, 천천히 읽어 드릴게요."
+   },
+   "plan": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "또렷한 색으로 보여 드리고, 쉬운 말로 보여 드리고, 천천히 읽어 드릴게요."
+   },
+   "fixes": [],
+   "verdict": "AI 구성안(검증 통과)",
+   "sec": 15.9
+  },
+  "BIG.HC.EASY.VOICE.TOUCH": {
+   "codes": [
+    "BIG",
+    "HC",
+    "EASY",
+    "VOICE",
+    "TOUCH"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨와 색을 크게 했어요. 설명은 '설명 보기'를 누르세요. 천천히 읽어 드릴게요. 버튼을 크게 했어요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨, 또렷한 색, 쉬운 말, 읽어 주기, 큰 버튼으로 보여 드릴게요."
+   },
+   "fixes": [
+    "안내 문장(길이 50자 넘음) → 기본 문장"
+   ],
+   "verdict": "AI 구성안(보정 1)",
+   "sec": 16.9
+  },
+  "ONE": {
+   "codes": [
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 120,
+    "read": [],
+    "greeting": "한 화면에 한 가지씩을 골랐어요. 설명은 '설명 보기'를 누르세요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 120,
+    "read": [],
+    "greeting": "한 화면에 한 가지씩을 골랐어요. 설명은 '설명 보기'를 누르세요."
+   },
+   "fixes": [],
+   "verdict": "AI 구성안(검증 통과)",
+   "sec": 14
+  },
+  "BIG.ONE": {
+   "codes": [
+    "BIG",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 글씨와 한 화면에 한 가지씩을 골랐어요. 설명은 '설명 보기'를 누르세요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 글씨와 한 화면에 한 가지씩을 골랐어요. 설명은 '설명 보기'를 누르세요."
+   },
+   "fixes": [],
+   "verdict": "AI 구성안(검증 통과)",
+   "sec": 10
+  },
+  "HC.ONE": {
+   "codes": [
+    "HC",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 3,
+    "detail": "접기",
+    "options": "하나씩",
+    "text_pct": 100,
+    "button_pct": 120,
+    "read": [],
+    "greeting": "또렷한 색을 사용했어요. 설명은 '설명 보기'를 누르세요. 한 화면에 한 가지씩을 골랐으니, 처음 보이는 메"
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 3,
+    "detail": "접기",
+    "options": "하나씩",
+    "text_pct": 100,
+    "button_pct": 120,
+    "read": [],
+    "greeting": "또렷한 색, 한 화면에 한 가지씩으로 보여 드릴게요."
+   },
+   "fixes": [
+    "안내 문장(길이 50자 넘음, '-요'로 끝나지 않음) → 기본 문장"
+   ],
+   "verdict": "AI 구성안(보정 1)",
+   "sec": 12.3
+  },
+  "BIG.HC.ONE": {
+   "codes": [
+    "BIG",
+    "HC",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 5,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨와 색을 크게 했어요. 설명은 '설명 보기'를 누르세요. 한 화면에 한 가지씩을 골랐어요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 글씨, 또렷한 색, 한 화면에 한 가지씩으로 보여 드릴게요."
+   },
+   "fixes": [
+    "한 화면에 한 가지씩인데 한 쪽 5개 → 4개",
+    "안내 문장(길이 50자 넘음) → 기본 문장"
+   ],
+   "verdict": "AI 구성안(보정 2)",
+   "sec": 13.8
+  },
+  "EASY.ONE": {
+   "codes": [
+    "EASY",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 120,
+    "read": [],
+    "greeting": "쉬운 말로 보여 드리고, 고를 것은 하나씩 물어볼게요."
+   },
+   "plan": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 120,
+    "read": [],
+    "greeting": "쉬운 말로 보여 드리고, 고를 것은 하나씩 물어볼게요."
+   },
+   "fixes": [],
+   "verdict": "AI 구성안(검증 통과)",
+   "sec": 10.2
+  },
+  "BIG.EASY.ONE": {
+   "codes": [
+    "BIG",
+    "EASY",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 글씨와 쉬운 말을 크게 했어요. 한 화면에 한 가지씩을 골랐으면 하나씩을 골랐어요. 설명은 '설명 보기'"
+   },
+   "plan": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 글씨, 쉬운 말, 한 화면에 한 가지씩으로 보여 드릴게요."
+   },
+   "fixes": [
+    "안내 문장(길이 50자 넘음, '-요'로 끝나지 않음) → 기본 문장"
+   ],
+   "verdict": "AI 구성안(보정 1)",
+   "sec": 12.2
+  },
+  "HC.EASY.ONE": {
+   "codes": [
+    "HC",
+    "EASY",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "또렷한 색으로 보여 드리고, 쉬운 말로 보여 드리고, 고를 것은 하나씩 물어볼게요."
+   },
+   "plan": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 120,
+    "read": [],
+    "greeting": "또렷한 색으로 보여 드리고, 쉬운 말로 보여 드리고, 고를 것은 하나씩 물어볼게요."
+   },
+   "fixes": [
+    "큰 버튼을 고르지 않았는데 단추 160% → 120%"
+   ],
+   "verdict": "AI 구성안(보정 1)",
+   "sec": 15.7
+  },
+  "BIG.HC.EASY.ONE": {
+   "codes": [
+    "BIG",
+    "HC",
+    "EASY",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨와 색을 크게 했어요. 설명은 '설명 보기'를 누르세요. 한 화면에 한 가지씩을 골랐어요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 글씨, 또렷한 색, 쉬운 말, 한 화면에 한 가지씩으로 보여 드릴게요."
+   },
+   "fixes": [
+    "한 화면에 한 가지씩인데 한 쪽 6개 → 4개",
+    "안내 문장(길이 50자 넘음) → 기본 문장"
+   ],
+   "verdict": "AI 구성안(보정 2)",
+   "sec": 14.6
+  },
+  "VOICE.ONE": {
+   "codes": [
+    "VOICE",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 120,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "읽어 주기를 천천히, 한 화면에 한 가지씩을 골랐어요."
+   },
+   "plan": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 120,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "읽어 주기를 천천히, 한 화면에 한 가지씩을 골랐어요."
+   },
+   "fixes": [],
+   "verdict": "AI 구성안(검증 통과)",
+   "sec": 12
+  },
+  "BIG.VOICE.ONE": {
+   "codes": [
+    "BIG",
+    "VOICE",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 5,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨와 큰 버튼을 크게 했어요. 설명은 '설명 보기'를 누르세요. 천천히 읽어 드릴게요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨, 읽어 주기, 한 화면에 한 가지씩으로 보여 드릴게요."
+   },
+   "fixes": [
+    "한 화면에 한 가지씩인데 옵션을 한 화면에 모두 → 하나씩",
+    "한 화면에 한 가지씩인데 한 쪽 5개 → 4개",
+    "안내 문장(길이 50자 넘음, 고르지 않은 기능(큰 버튼)을 말함) → 기본 문장"
+   ],
+   "verdict": "AI 구성안(보정 3)",
+   "sec": 14.6
+  },
+  "HC.VOICE.ONE": {
+   "codes": [
+    "HC",
+    "VOICE",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "또렷한 색으로 보여 드리고, 천천히 읽어 드릴게요. 한 화면에 한 가지씩을 골랐어요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 120,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "또렷한 색으로 보여 드리고, 천천히 읽어 드릴게요. 한 화면에 한 가지씩을 골랐어요."
+   },
+   "fixes": [
+    "큰 버튼을 고르지 않았는데 단추 160% → 120%",
+    "한 화면에 한 가지씩인데 한 쪽 6개 → 4개"
+   ],
+   "verdict": "AI 구성안(보정 2)",
+   "sec": 13.6
+  },
+  "BIG.HC.VOICE.ONE": {
+   "codes": [
+    "BIG",
+    "HC",
+    "VOICE",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨로 보여 드리고, 색상은 '또렷한 색'으로 변경했어요. 천천히 읽어 드릴게요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨로 보여 드리고, 색상은 '또렷한 색'으로 변경했어요. 천천히 읽어 드릴게요."
+   },
+   "fixes": [
+    "한 화면에 한 가지씩인데 옵션을 한 화면에 모두 → 하나씩",
+    "한 화면에 한 가지씩인데 한 쪽 6개 → 4개"
+   ],
+   "verdict": "AI 구성안(보정 2)",
+   "sec": 14.3
+  },
+  "EASY.VOICE.ONE": {
+   "codes": [
+    "EASY",
+    "VOICE",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 120,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "쉬운 말로 보여 드리고, 천천히 읽어 드릴게요. 한 화면에 한 가지씩을 골랐어요."
+   },
+   "plan": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 120,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "쉬운 말로 보여 드리고, 천천히 읽어 드릴게요. 한 화면에 한 가지씩을 골랐어요."
+   },
+   "fixes": [],
+   "verdict": "AI 구성안(검증 통과)",
+   "sec": 16.1
+  },
+  "BIG.EASY.VOICE.ONE": {
+   "codes": [
+    "BIG",
+    "EASY",
+    "VOICE",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨와 작은 버튼을 크게 했어요. 설명은 '설명 보기'를 누르세요. 천천히 읽어 드릴게요. 한 화면에 한"
+   },
+   "plan": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨, 쉬운 말, 읽어 주기, 한 화면에 한 가지씩으로 보여 드릴게요."
+   },
+   "fixes": [
+    "한 화면에 한 가지씩인데 옵션을 한 화면에 모두 → 하나씩",
+    "한 화면에 한 가지씩인데 한 쪽 6개 → 4개",
+    "안내 문장(길이 50자 넘음, '-요'로 끝나지 않음, 고르지 않은 기능(큰 버튼)을 말함) → 기본 문장"
+   ],
+   "verdict": "AI 구성안(보정 3)",
+   "sec": 15.3
+  },
+  "HC.EASY.VOICE.ONE": {
+   "codes": [
+    "HC",
+    "EASY",
+    "VOICE",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "또렷한 색으로 보여 드리고, 쉬운 말로 보여 드리고, 고를 것은 하나씩 물어볼게요."
+   },
+   "plan": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 120,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "또렷한 색으로 보여 드리고, 쉬운 말로 보여 드리고, 고를 것은 하나씩 물어볼게요."
+   },
+   "fixes": [
+    "큰 버튼을 고르지 않았는데 단추 160% → 120%"
+   ],
+   "verdict": "AI 구성안(보정 1)",
+   "sec": 14.6
+  },
+  "BIG.HC.EASY.VOICE.ONE": {
+   "codes": [
+    "BIG",
+    "HC",
+    "EASY",
+    "VOICE",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨와 색을 바꾼 것에 대해 설명드리고, 천천히 읽어 드릴게요. 한 화면에 한 가지씩을 골랐어요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨, 또렷한 색, 쉬운 말, 읽어 주기, 한 화면에 한 가지씩으로 보여 드릴게요."
+   },
+   "fixes": [
+    "한 화면에 한 가지씩인데 옵션을 한 화면에 모두 → 하나씩",
+    "한 화면에 한 가지씩인데 한 쪽 6개 → 4개",
+    "안내 문장(길이 50자 넘음) → 기본 문장"
+   ],
+   "verdict": "AI 구성안(보정 3)",
+   "sec": 14.5
+  },
+  "TOUCH.ONE": {
+   "codes": [
+    "TOUCH",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 버튼을 골랐어요. 한 화면에 한 가지씩을 골랐어요. 설명은 '설명 보기'를 누르세요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 버튼을 골랐어요. 한 화면에 한 가지씩을 골랐어요. 설명은 '설명 보기'를 누르세요."
+   },
+   "fixes": [],
+   "verdict": "AI 구성안(검증 통과)",
+   "sec": 11.9
+  },
+  "BIG.TOUCH.ONE": {
+   "codes": [
+    "BIG",
+    "TOUCH",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 5,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 글씨와 큰 버튼을 골랐어요. 설명은 '설명 보기'를 누르세요. 한 화면에 한 가지씩을 골랐어요. 첫 화면"
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 글씨, 큰 버튼, 한 화면에 한 가지씩으로 보여 드릴게요."
+   },
+   "fixes": [
+    "한 화면에 한 가지씩인데 옵션을 한 화면에 모두 → 하나씩",
+    "한 화면에 한 가지씩인데 한 쪽 5개 → 4개",
+    "안내 문장(길이 50자 넘음, '-요'로 끝나지 않음) → 기본 문장"
+   ],
+   "verdict": "AI 구성안(보정 3)",
+   "sec": 11.9
+  },
+  "HC.TOUCH.ONE": {
+   "codes": [
+    "HC",
+    "TOUCH",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 100,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "또렷한 색으로 보여 드리고, 큰 버튼을 골랐어요. 한 화면에 한 가지씩을 골랐어요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 100,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "또렷한 색으로 보여 드리고, 큰 버튼을 골랐어요. 한 화면에 한 가지씩을 골랐어요."
+   },
+   "fixes": [
+    "한 화면에 한 가지씩인데 옵션을 한 화면에 모두 → 하나씩",
+    "한 화면에 한 가지씩인데 한 쪽 6개 → 4개"
+   ],
+   "verdict": "AI 구성안(보정 2)",
+   "sec": 11.1
+  },
+  "BIG.HC.TOUCH.ONE": {
+   "codes": [
+    "BIG",
+    "HC",
+    "TOUCH",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 글씨로 보여 드리고, 색을 또렷하게 했어요. 단추는 크게 했어요. 설명은 '설명 보기'를 누르세요. 한화"
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 글씨, 또렷한 색, 큰 버튼, 한 화면에 한 가지씩으로 보여 드릴게요."
+   },
+   "fixes": [
+    "한 화면에 한 가지씩인데 옵션을 한 화면에 모두 → 하나씩",
+    "한 화면에 한 가지씩인데 한 쪽 6개 → 4개",
+    "안내 문장(길이 50자 넘음, '-요'로 끝나지 않음) → 기본 문장"
+   ],
+   "verdict": "AI 구성안(보정 3)",
+   "sec": 13.7
+  },
+  "EASY.TOUCH.ONE": {
+   "codes": [
+    "EASY",
+    "TOUCH",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "쉬운 말로 보여 드리고, 큰 버튼을 골랐어요. 한 화면에 한 가지씩을 골랐어요."
+   },
+   "plan": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "쉬운 말로 보여 드리고, 큰 버튼을 골랐어요. 한 화면에 한 가지씩을 골랐어요."
+   },
+   "fixes": [],
+   "verdict": "AI 구성안(검증 통과)",
+   "sec": 10.7
+  },
+  "BIG.EASY.TOUCH.ONE": {
+   "codes": [
+    "BIG",
+    "EASY",
+    "TOUCH",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 5,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 글씨와 큰 버튼을 골랐어요. 설명은 '설명 보기'를 누르세요. 한 화면에 한 가지씩을 골랐어요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 글씨, 쉬운 말, 큰 버튼, 한 화면에 한 가지씩으로 보여 드릴게요."
+   },
+   "fixes": [
+    "한 화면에 한 가지씩인데 한 쪽 5개 → 4개",
+    "안내 문장(길이 50자 넘음) → 기본 문장"
+   ],
+   "verdict": "AI 구성안(보정 2)",
+   "sec": 11.6
+  },
+  "HC.EASY.TOUCH.ONE": {
+   "codes": [
+    "HC",
+    "EASY",
+    "TOUCH",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "또렷한 색으로 보여 드리고, 쉬운 말로 보여 드리고, 한 화면에 한 가지씩 물어볼게요."
+   },
+   "plan": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "또렷한 색으로 보여 드리고, 쉬운 말로 보여 드리고, 한 화면에 한 가지씩 물어볼게요."
+   },
+   "fixes": [],
+   "verdict": "AI 구성안(검증 통과)",
+   "sec": 16.4
+  },
+  "BIG.HC.EASY.TOUCH.ONE": {
+   "codes": [
+    "BIG",
+    "HC",
+    "EASY",
+    "TOUCH",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨와 색을 크게 했어요. 버튼을 크게 했어요. 설명은 '설명 보기'를 누르세요. 한 화면에 한 가지씩을"
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [],
+    "greeting": "큰 글씨, 또렷한 색, 쉬운 말, 큰 버튼, 한 화면에 한 가지씩으로 보여 드릴게요."
+   },
+   "fixes": [
+    "한 화면에 한 가지씩인데 옵션을 한 화면에 모두 → 하나씩",
+    "한 화면에 한 가지씩인데 한 쪽 6개 → 4개",
+    "안내 문장(길이 50자 넘음, '-요'로 끝나지 않음) → 기본 문장"
+   ],
+   "verdict": "AI 구성안(보정 3)",
+   "sec": 19.1
+  },
+  "VOICE.TOUCH.ONE": {
+   "codes": [
+    "VOICE",
+    "TOUCH",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 5,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "읽어 주기를 천천히, 큰 버튼을 골랐어요. 한 화면에 한 가지씩을 골랐어요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "읽어 주기를 천천히, 큰 버튼을 골랐어요. 한 화면에 한 가지씩을 골랐어요."
+   },
+   "fixes": [
+    "한 화면에 한 가지씩인데 한 쪽 5개 → 4개"
+   ],
+   "verdict": "AI 구성안(보정 1)",
+   "sec": 18.5
+  },
+  "BIG.VOICE.TOUCH.ONE": {
+   "codes": [
+    "BIG",
+    "VOICE",
+    "TOUCH",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 5,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "글씨와 단추를 크게 했어요. 설명은 '설명 보기'를 누르세요. 천천히 읽어 드릴게요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "글씨와 단추를 크게 했어요. 설명은 '설명 보기'를 누르세요. 천천히 읽어 드릴게요."
+   },
+   "fixes": [
+    "한 화면에 한 가지씩인데 한 쪽 5개 → 4개"
+   ],
+   "verdict": "AI 구성안(보정 1)",
+   "sec": 15.4
+  },
+  "HC.VOICE.TOUCH.ONE": {
+   "codes": [
+    "HC",
+    "VOICE",
+    "TOUCH",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "또렷한 색으로 보여 드리고, 읽어 주기를 천천히 해요. 큰 버튼을 골랐어요. 한 화면에 한 가지씩을 골랐어요"
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "또렷한 색, 읽어 주기, 큰 버튼, 한 화면에 한 가지씩으로 보여 드릴게요."
+   },
+   "fixes": [
+    "큰 글씨를 고르지 않았는데 글씨 150% → 110%",
+    "한 화면에 한 가지씩인데 한 쪽 6개 → 4개",
+    "안내 문장(길이 50자 넘음) → 기본 문장"
+   ],
+   "verdict": "AI 구성안(보정 3)",
+   "sec": 20.4
+  },
+  "BIG.HC.VOICE.TOUCH.ONE": {
+   "codes": [
+    "BIG",
+    "HC",
+    "VOICE",
+    "TOUCH",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 6,
+    "detail": "펼침",
+    "options": "한 화면에 모두",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨와 색을 크게 했어요. 읽어 주기는 천천히 해요. 단추는 큰 버튼으로 바꿨어요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨와 색을 크게 했어요. 읽어 주기는 천천히 해요. 단추는 큰 버튼으로 바꿨어요."
+   },
+   "fixes": [
+    "한 화면에 한 가지씩인데 옵션을 한 화면에 모두 → 하나씩",
+    "한 화면에 한 가지씩인데 한 쪽 6개 → 4개"
+   ],
+   "verdict": "AI 구성안(보정 2)",
+   "sec": 20.8
+  },
+  "EASY.VOICE.TOUCH.ONE": {
+   "codes": [
+    "EASY",
+    "VOICE",
+    "TOUCH",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "쉬운 말로 보여 드리고, 천천히 읽어 드릴게요. 한 화면에 한 가지씩을 골랐어요."
+   },
+   "plan": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "쉬운 말로 보여 드리고, 천천히 읽어 드릴게요. 한 화면에 한 가지씩을 골랐어요."
+   },
+   "fixes": [],
+   "verdict": "AI 구성안(검증 통과)",
+   "sec": 20.2
+  },
+  "BIG.EASY.VOICE.TOUCH.ONE": {
+   "codes": [
+    "BIG",
+    "EASY",
+    "VOICE",
+    "TOUCH",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 5,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "글씨와 단추를 크게 했어요. 설명은 '설명 보기'를 누르세요. 천천히 읽어 드릴게요."
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "글씨와 단추를 크게 했어요. 설명은 '설명 보기'를 누르세요. 천천히 읽어 드릴게요."
+   },
+   "fixes": [
+    "한 화면에 한 가지씩인데 한 쪽 5개 → 4개"
+   ],
+   "verdict": "AI 구성안(보정 1)",
+   "sec": 29.6
+  },
+  "HC.EASY.VOICE.TOUCH.ONE": {
+   "codes": [
+    "HC",
+    "EASY",
+    "VOICE",
+    "TOUCH",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "또렷한 색으로 보여 드리고, 쉬운 말로 보여 드리고, 천천히 읽어 드릴게요. 큰 버튼을 골랐어요. 한 화면에"
+   },
+   "plan": {
+    "list_show": "이름·가격·짧은 설명",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 110,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "또렷한 색, 쉬운 말, 읽어 주기, 큰 버튼, 한 화면에 한 가지씩으로 보여 드릴게요."
+   },
+   "fixes": [
+    "안내 문장(길이 50자 넘음, '-요'로 끝나지 않음) → 기본 문장"
+   ],
+   "verdict": "AI 구성안(보정 1)",
+   "sec": 30.3
+  },
+  "BIG.HC.EASY.VOICE.TOUCH.ONE": {
+   "codes": [
+    "BIG",
+    "HC",
+    "EASY",
+    "VOICE",
+    "TOUCH",
+    "ONE"
+   ],
+   "raw": {
+    "list_show": "이름·가격",
+    "per_page": 5,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "글씨와 단추를 크게 했어요. 설명은 '설명 보기'를 누르세요. 읽어 주기는 제목, 이름, 가격, 설명, 알레"
+   },
+   "plan": {
+    "list_show": "이름·가격",
+    "per_page": 4,
+    "detail": "펼침",
+    "options": "하나씩",
+    "text_pct": 150,
+    "button_pct": 160,
+    "read": [
+     "제목",
+     "이름",
+     "가격",
+     "설명",
+     "알레르기",
+     "옵션"
+    ],
+    "greeting": "큰 글씨, 또렷한 색, 쉬운 말, 읽어 주기, 큰 버튼, 한 화면에 한 가지씩으로 보여 드릴게요."
+   },
+   "fixes": [
+    "한 화면에 한 가지씩인데 한 쪽 5개 → 4개",
+    "안내 문장(길이 50자 넘음, '-요'로 끝나지 않음) → 기본 문장"
+   ],
+   "verdict": "AI 구성안(보정 2)",
+   "sec": 24.7
+  }
+ }
+}

@@ -31,7 +31,7 @@
 <script type="module">
 import { CODES, loadProfile, saveProfile, clearProfile, applyProfile, speak, el } from "./js/common.js";
 const params = new URLSearchParams(location.search);
-// v0.3: 돌아갈 화면(next)은 같은 출처의 정해진 페이지와 정해진 값만 받는다(외부 주소·javascript: 등은 무시 — 1차 모의 심사 B 실측)
+// v0.3: 돌아갈 화면(next)은 같은 출처의 정해진 페이지와 정해진 값만 받는다(외부 주소·javascript: 등은 무시 — 1차 내부 점검 B 실측)
 const NEXT_PAGES = ["order.html", "demo.html", "index.html", "kiosk.html"];
 function safeNext(raw) {
   if (!raw) return null;

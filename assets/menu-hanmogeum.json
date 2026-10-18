@@ -1,6 +1,7 @@
 {
  "store_id": "hanmogeum",
  "store": "카페 한모금(가상)",
+ "menu_ver": "20261017",
  "note": "가상 매장·가상 메뉴(실존 매장·상표 아님). allergy_derived = 메뉴 글의 재료 낱말로 정한 알레르기 유발 성분(build_assets.py ALLERGEN_WORDS, 매장 확인 필요)",
  "items": [
   {

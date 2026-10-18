@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>내 방식 주문 — 내 방식 QR</title>
 <link rel="stylesheet" href="css/app.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 </head>
 <body>
 <main class="wrap" id="app"></main>
@@ -14,7 +15,9 @@
   <button id="cartbtn" class="ghost" type="button">담은 것 <span id="cartn">0</span></button>
 </div>
 <script type="module">
-import { loadProfile, profileFromUrl, applyProfile, loadStore, viewItem, allergyBox, allergyLine, won, speak, channel, el, CODES, hasKoreanVoice } from "./js/common.js";
+import { loadProfile, profileFromUrl, applyProfile, loadStore, viewItem, allergyBox, allergyLine, won, speak, channel, el, CODES, hasKoreanVoice, askOption } from "./js/common.js";
+import { planFor } from "./js/plan.js";
+import { encodeOrder } from "./js/orderqr.js";
 
 const qs = new URLSearchParams(location.search);
 const k = /^\d{4}$/.test(qs.get("k") || "") ? qs.get("k") : ""; // v0.3: 네 자리 숫자만
@@ -23,29 +26,46 @@ const app = document.getElementById("app");
 const store = await loadStore();
 const cart = [];
 let codes = applyProfile(profile);
+let P = null; // v0.6: 지금 기능 조합의 화면 구성안 { key, plan, fixes, verdict }
 let firstScreen = true;
 let keepFocusKey = null; // v0.3(A): 한 화면 모드에서 고른 뒤 다시 그릴 때 포커스를 누른 단추에 그대로
-// 손님에게 보이는 출처 표시(개발 용어 대신 — 1차 모의 심사 E)
+// 손님에게 보이는 출처 표시(개발 용어 대신 — 1차 내부 점검 E)
 const SOURCE_LABEL = { "AI 쉬운 말": "쉬운 말 설명", "사전 치환(원문 유지)": "쉬운 낱말로 바꾼 매장 설명", "매장 원문(쉬운 말 실패)": "매장 설명 그대로", "원문": "매장 설명 그대로" };
+
+// v0.6: AI 화면 구성안 적용 — 글씨·단추 크기는 구성안 값(검증에서 기능별 최소 기준을 지킴), 나머지는 화면을 그릴 때 씀
+function applyPlan() {
+  P = planFor(store.plans, [...codes]);
+  const pl = P.plan;
+  document.body.style.setProperty("--fs", (19 * pl.text_pct / 100).toFixed(1) + "px");
+  document.body.style.setProperty("--btn-h", Math.round(48 * pl.button_pct / 100) + "px");
+  document.body.style.setProperty("--gap", pl.button_pct >= 140 ? "18px" : "12px");
+}
+applyPlan();
+const reads = (what) => codes.has("VOICE") && P.plan.read.includes(what);
+
+// v0.6(3차 내부 점검 B): 브라우저 '뒤로'로 앞 화면에 — 큰 화면 이동(목록·메뉴·주문 확인)만 기록
+const nav = [];
+function go(fn) { nav.push(fn); try { history.pushState({ myway: nav.length }, ""); } catch (e) { /* 무시 */ } fn(); }
+window.addEventListener("popstate", () => { nav.pop(); const f = nav[nav.length - 1]; (f || home)(); });
 
 function say(text) { if (codes.has("VOICE")) speak(text, true); }
 function screen(title, ...body) {
   const readBtn = codes.has("VOICE") ? el("button", { type: "button", class: "ghost", onclick: () => speak(app.innerText, true) }, "다시 읽기") : null;
-  // v0.3(1차 모의 심사 A): 단계마다 제목(h1), 바뀐 안내는 aria-live 한 줄로만, 첫 화면은 포커스를 옮기지 않음(시연 화면 안에서 쪽이 저절로 내려가지 않게)
+  // v0.3(1차 내부 점검 A): 단계마다 제목(h1), 바뀐 안내는 aria-live 한 줄로만, 첫 화면은 포커스를 옮기지 않음(시연 화면 안에서 쪽이 저절로 내려가지 않게)
   app.replaceChildren(el("div", { class: "row" }, el("h1", { class: "step-title grow", tabindex: "-1" }, title), readBtn), ...body.filter(Boolean));
   document.getElementById("live").textContent = title;
   // v0.3(A): 읽어 주기를 켰는데 이 기기에 한국어 음성이 없으면 알림
   if (codes.has("VOICE") && hasKoreanVoice() === false) app.prepend(el("div", { class: "card notice", role: "status" }, "이 휴대폰에서는 읽어 주기를 할 수 없어요. 어려우면 아래 「직원 부르기」를 누르세요."));
   if (keepFocusKey) {
     const b = app.querySelector(`[data-k="${keepFocusKey}"]`); keepFocusKey = null;
-    if (b) { b.focus({ preventScroll: true }); firstScreen = false; say(title); return; }
+    if (b) { b.focus({ preventScroll: true }); firstScreen = false; return; }
   }
   if (!firstScreen) {
     window.scrollTo(0, 0);
     const h = app.querySelector("h1"); if (h) h.focus({ preventScroll: true });
   }
   firstScreen = false;
-  say(title);
+  if (reads("제목")) say(title);
   document.getElementById("cartn").textContent = cart.length;
 }
 
@@ -54,73 +74,116 @@ function start() {
     screen("내 방식이 아직 없어요",
       el("p", {}, "큰 글씨·쉬운 말·읽어 주기 같은 설정을 먼저 고르면, 이 매장 메뉴가 그 방식으로 보여요."),
       el("a", { class: "btn block", href: `my.html?next=${encodeURIComponent(location.pathname.split("/").pop() + location.search)}` }, "내 방식 정하기"),
-      el("button", { type: "button", class: "block ghost", onclick: () => { profile = { codes: [] }; codes = applyProfile(profile); home(); } }, "기본 화면으로 계속"));
+      el("button", { type: "button", class: "block ghost", onclick: () => { profile = { codes: [] }; codes = applyProfile(profile); applyPlan(); home(); } }, "기본 화면으로 계속"));
     return;
   }
   home();
 }
 
 function home() {
+  nav.length = 0;
   const on = [...codes].map((c) => CODES[c].label);
   const cats = [...new Set(store.menu.items.map((i) => i.category))];
   screen(`${store.menu.store} — 무엇을 드릴까요?`,
+    P.plan.greeting ? el("p", { class: "greet" }, P.plan.greeting) : null, // v0.6: AI 구성안의 안내 한 줄(검증 통과분, 아니면 기본 문장)
     el("p", { class: "sub small" }, on.length ? `내 방식: ${on.join(" · ")}` : "기본 화면"),
-    ...cats.map((c) => el("button", { type: "button", class: "block", onclick: () => list(c) }, c)),
-    el("p", { class: "sub small" }, `${k ? `키오스크 번호 ${k} 매장의 메뉴를 보고 있어요.` : "매장 메뉴를 보고 있어요."} 가격은 매장 원래 가격 그대로예요. (시제품은 기기 사이 실시간 연결이 없어요 — 한 기기 시연 화면에서만 키오스크에 표시돼요)`));
+    ...cats.map((c) => el("button", { type: "button", class: "block", onclick: () => go(() => list(c)) }, c)),
+    el("p", { class: "sub small" }, `${k ? `키오스크 번호 ${k} 매장의 메뉴를 보고 있어요.` : "매장 메뉴를 보고 있어요."} 가격은 매장 원래 가격 그대로예요.`),
+    el("p", { class: "sub small plan-note" }, `화면 구성: ${P.verdict.startsWith("AI") ? "AI가 만든 구성안을 규칙으로 검증" + (P.fixes.length ? `(보정 ${P.fixes.length})` : "") + (store.plans && store.plans.review ? ` · ${store.plans.review}` : "") : "기본 구성"}`));
 }
 
-function list(cat) {
-  const items = store.menu.items.filter((i) => i.category === cat).map((i) => viewItem(i, store, codes.has("EASY")));
+// 목록에 보일 짧은 설명 — 첫 문장(마침표·쉼표 앞) 18자까지
+const shortDesc = (d) => { const s = String(d).split(/[.。]/)[0].split(",")[0].trim(); return s.length > 18 ? s.slice(0, 17) + "…" : s; };
+// v0.6: 목록은 구성안의 '한 번에 보일 수'만큼 먼저 보이고, 「메뉴 N개 더 보기」로 아래에 이어 붙인다(답변서2 4번 '스크롤 유도')
+function list(cat, upto = 0) {
+  const all = store.menu.items.filter((i) => i.category === cat).map((i) => viewItem(i, store, codes.has("EASY")));
+  const per = P.plan.per_page, n = Math.min(all.length, upto || per);
+  const show = P.plan.list_show;
   screen(`${cat} — 하나를 고르세요`,
-    ...items.map((v) => el("button", { type: "button", class: "block ghost", style: "flex-direction:column; align-items:flex-start; text-align:left",
-      onclick: () => item(v) },
+    ...all.slice(0, n).map((v, idx) => el("button", { type: "button", class: "block ghost", "data-k": `it-${idx}`, style: "flex-direction:column; align-items:flex-start; text-align:left",
+      onclick: () => go(() => item(v)) },
       el("span", { class: "row", style: "width:100%" }, el("b", { class: "grow" }, v.name), el("span", { class: "price" }, won(v.price))),
-      el("span", { class: "sub", style: "font-weight:400" }, v.desc))),
+      show === "이름·가격" ? null : el("span", { class: "sub", style: "font-weight:400" }, show === "이름·가격·짧은 설명" ? shortDesc(v.desc) : v.desc))),
+    n < all.length ? el("button", { type: "button", class: "block more", onclick: () => { keepFocusKey = `it-${n}`; list(cat, n + per); } }, `↓ 메뉴 ${all.length - n}개 더 보기`) : null,
     el("button", { type: "button", class: "block ghost", onclick: home }, "← 처음으로"));
 }
 
 function stepsOf(v) {
-  // 고를 것: 온도(HOT/ICE) 하나 고르기 → 나머지 옵션은 '할까요?' 하나씩. 단계는 코드가 만든다(AI 관여 없음)
+  // 고를 것: 온도(HOT/ICE) 하나 고르기 → 나머지 옵션은 손님 말로 하나씩 묻기. 단계는 코드가 만든다(AI 관여 없음)
   const temp = v.rawOptions.map((o, i) => (o === "HOT" || o === "ICE") ? i : -1).filter((i) => i >= 0);
   const steps = [];
   if (temp.length >= 2) steps.push({ kind: "one", title: "따뜻하게, 차갑게 중 하나를 고르세요", idx: temp });
   else if (temp.length === 1) steps.push({ kind: "info", title: `${v.options[temp[0]]}만 있어요`, idx: temp });
-  v.rawOptions.forEach((o, i) => { if (!temp.includes(i)) steps.push({ kind: "yn", title: `${v.options[i]} — 이렇게 할까요?`, idx: [i] }); });
+  v.rawOptions.forEach((o, i) => { if (!temp.includes(i)) steps.push({ kind: "yn", title: askOption(v.options[i]), idx: [i] }); });
   return steps;
 }
 
 function item(v) {
   const steps = stepsOf(v);
   const pick = { temp: null, on: new Set() };
+  let onePerScreen = P.plan.options === "하나씩";
+  let fold = P.plan.detail === "접기";
+  let guard = null;       // v0.6 실행 중 보정: 이 화면에서 '담기'가 화면 밖이면 접기 → 하나씩
+  let showDesc = false;   // 접기일 때 「설명 보기」를 눌렀는지
   const descCard = () => el("div", { class: "card" },
     el("div", { class: "row" }, el("b", { class: "grow" }, v.name), el("span", { class: "price" }, won(v.price))),
     el("p", {}, v.desc),
-    el("span", { class: "tag " + (v.source === "AI 쉬운 말" ? "ai" : "orig") }, (SOURCE_LABEL[v.source] || "매장 설명 그대로") + (v.review ? ` · ${v.review}` : ""))); // v0.5: 승인 상태(시연 저장본은 '시연용 — 사람 승인 없음')
-  // 고르는 화면의 짧은 머리(이름·가격) — v0.4(2차 모의 심사 D): '모두 켜기'에서도 고르는 단추가 첫 화면 안에(글씨 > 단추 > 설명)
+    el("span", { class: "tag " + (v.source === "AI 쉬운 말" ? "ai" : "orig") }, (SOURCE_LABEL[v.source] || "매장 설명 그대로") + (v.review ? ` · ${v.review}` : ""))); // v0.5: 승인 상태
+  // 고르는 화면의 짧은 머리(이름·가격) — 글씨 > 단추 > 설명(답변서2 4번)
   const miniHead = () => el("p", { class: "row" }, el("b", { class: "grow" }, v.name), el("span", { class: "price" }, won(v.price)));
-  const onePerScreen = codes.has("ONE");
-  // v0.4(2차 모의 심사 A·B·E 재현: 아포가토): 한 가지씩 모드는 메뉴마다 '설명·알레르기 확인' 화면을 반드시 먼저 거친다(고를 것이 없는 메뉴 포함)
   let si = onePerScreen ? -1 : 0;
-  // v0.5.1: 읽어 주기를 켜면 제목만이 아니라 알레르기 문장까지 소리로 읽는다(speak가 앞 낭독을 끊으므로 제목 대신 이 문장)
-  const sayAllergy = () => say(`${v.name}. ${allergyLine(v)}`);
+  // 읽어 주기: 구성안이 정한 것(가격·알레르기는 검증이 반드시 넣음)을 이 순서로
+  const sayItem = (lead) => {
+    if (!codes.has("VOICE")) return;
+    const parts = [lead || v.name];
+    if (reads("가격")) parts.push(won(v.price));
+    if (reads("설명")) parts.push(v.desc);
+    if (reads("옵션") && v.options.length) parts.push("고를 것: " + v.options.join(", "));
+    if (reads("알레르기")) parts.push(allergyLine(v));
+    say(parts.join(". "));
+  };
+  const descToggle = () => el("button", { type: "button", class: "block ghost", "aria-expanded": showDesc ? "true" : "false", "data-k": "desc",
+    onclick: () => { showDesc = !showDesc; keepFocusKey = "desc"; render(); } }, showDesc ? "설명 접기" : "설명 보기");
+  // 단추 아래끝이 '직원 부르기' 줄 위(이 기기의 실제 화면 높이)를 넘는지
+  const overLimit = (b) => { const bar = document.getElementById("bar"); return b.getBoundingClientRect().bottom > window.innerHeight - (bar ? bar.getBoundingClientRect().height : 0); };
   function render() {
-    const again = keepFocusKey != null; // 일반 모드에서 옵션을 눌러 다시 그릴 때는 알레르기를 되풀이해 읽지 않음
+    const again = keepFocusKey != null; // 옵션을 눌러 다시 그릴 때는 되풀이해 읽지 않음
     if (onePerScreen) {
       if (si < 0) {
-        screen(`${v.name} — 설명과 알레르기를 확인하세요`, descCard(), allergyBox(v),
-          el("button", { type: "button", class: "block", onclick: () => { si = 0; render(); } }, steps.length ? "확인했어요 — 고르기 시작" : "확인했어요"),
+        // 접기: 이름·가격 → 알레르기 → 확인 단추 → 설명 보기(글씨 > 단추 > 설명, 답변서2 4번) / 펼침: 설명 → 알레르기 → 확인 단추
+        const okBtn = el("button", { type: "button", class: "block", "data-act": "ok", onclick: () => { si = 0; render(); } }, steps.length ? "확인했어요 — 고르기 시작" : "확인했어요");
+        screen(`${v.name} — 설명과 알레르기를 확인하세요`,
+          ...(fold ? [miniHead(), allergyBox(v), okBtn, showDesc ? descCard() : null, descToggle()] : [descCard(), allergyBox(v), okBtn]),
+          guard ? el("p", { class: "sub small" }, guard) : null, // 보정 안내는 단추 아래(첫 화면 높이를 쓰지 않게)
           el("button", { type: "button", class: "block ghost", onclick: () => list(v.category) }, "← 다른 메뉴"));
-        sayAllergy();
+        if (!again) {
+          // v0.6 실행 중 보정 — 확인 단추가 아래 단추 줄에 가리거나 화면 밖이면 설명을 접음
+          if (!fold && overLimit(okBtn)) { fold = true; guard = guard || "화면에 다 들어가지 않아 설명을 접었어요"; return render(); }
+          sayItem();
+        }
         return;
       }
       if (si >= steps.length) return review();
       const s = steps[si];
       screen(s.title, miniHead(), stepBox(s, true), el("button", { type: "button", class: "block ghost", onclick: () => { si--; render(); } }, "← 뒤로"));
-    } else {
-      screen(v.name, descCard(), allergyBox(v), ...steps.map((s) => el("div", { class: "card" }, el("b", {}, s.title), stepBox(s, false))),
-        el("button", { type: "button", class: "block", onclick: add }, "담기"),
-        el("button", { type: "button", class: "block ghost", onclick: () => list(v.category) }, "← 다른 메뉴"));
-      if (!again) sayAllergy();
+      return;
+    }
+    const descPart = fold ? [showDesc ? descCard() : null, descToggle()] : [descCard()];
+    // 접기: 이름·가격 → 알레르기 → 고를 것 → 담기 → 설명 보기 / 펼침: 설명 → 알레르기 → 고를 것 → 담기
+    screen(v.name, fold ? miniHead() : null, ...(fold ? [] : descPart), allergyBox(v),
+      ...steps.map((s) => el("div", { class: "card" }, el("b", {}, s.title), stepBox(s, false))),
+      el("button", { type: "button", class: "block", "data-act": "add", onclick: add }, "담기"),
+      ...(fold ? descPart : []),
+      guard ? el("p", { class: "sub small" }, guard) : null,
+      el("button", { type: "button", class: "block ghost", onclick: () => list(v.category) }, "← 다른 메뉴"));
+    if (!again) {
+      // v0.6 실행 중 보정 — 이 기기 화면에서 '담기'가 아래 단추 줄에 가리거나 화면 밖이면(구성안 검증은 어림이라) 설명을 접고, 그래도 넘치면 하나씩 묻기
+      const b = app.querySelector('[data-act="add"]');
+      if (b && overLimit(b)) {
+        if (!fold) { fold = true; guard = "화면에 다 들어가지 않아 설명을 접었어요"; return render(); }
+        onePerScreen = true; si = -1; guard = "고를 것이 많아 하나씩 물어볼게요"; return render();
+      }
+      sayItem();
     }
   }
   function stepBox(s, advance) {
@@ -151,10 +214,10 @@ function item(v) {
   }
   function add() {
     if (steps.some((s) => s.kind === "one") && pick.temp == null) { say("따뜻하게, 차갑게 중 하나를 골라 주세요"); alert("따뜻하게, 차갑게 중 하나를 골라 주세요."); return; }
-    // v0.4(2차 모의 심사 B): 키오스크가 자기 가격표로 다시 계산하도록 메뉴 id·고른 옵션 번호도 함께 담는다
+    // v0.4: 키오스크가 자기 가격표로 다시 계산하도록 메뉴 id·고른 옵션 번호도 함께 담는다
     cart.push({ id: v.id, temp: pick.temp, on: [...pick.on], label: label(), price: total() });
     screen("담았어요", el("div", { class: "card" }, el("p", {}, label()), el("p", { class: "price" }, won(total()))),
-      el("button", { type: "button", class: "block", onclick: confirmOrder }, "주문 확인하기"),
+      el("button", { type: "button", class: "block", onclick: () => go(confirmOrder) }, "주문 확인하기"),
       el("button", { type: "button", class: "block ghost", onclick: home }, "더 고르기"));
   }
   render();
@@ -164,36 +227,55 @@ function confirmOrder() {
   if (!cart.length) { screen("아직 담은 것이 없어요", el("button", { type: "button", class: "block", onclick: home }, "메뉴 보기")); return; }
   const sum = cart.reduce((s, c) => s + c.price, 0);
   const byId = Object.fromEntries(store.menu.items.map((i) => [i.id, i]));
-  // v0.5(3차 모의 심사 A·D·E P0: '결제 전 확인에서 알레르기 다시 표시'가 사실이 아니었음) — 품목마다 알레르기 한 줄(담기 화면의 상자와 같은 근거)
+  // v0.5: 품목마다 알레르기 한 줄(담기 화면의 상자와 같은 근거)
   screen("결제 전에 확인하세요",
     el("div", { class: "card" }, ...cart.map((c, i) => el("div", { class: "cartline" },
       el("div", { class: "row" }, el("span", { class: "grow" }, `${i + 1}. ${c.label}`), el("span", { class: "price" }, won(c.price)),
         el("button", { type: "button", class: "ghost", "aria-label": `${c.label} 빼기`, onclick: () => { cart.splice(i, 1); confirmOrder(); } }, "빼기")),
       el("div", { class: "allergy-line" }, allergyLine(viewItem(byId[c.id], store, codes.has("EASY")))))),
-      el("p", { class: "price", style: "font-size:1.3em" }, `합계 ${won(sum)}`)),
-    el("button", { type: "button", class: "block", onclick: () => pay(sum) }, "결제하기(시연)"),
+      el("p", { class: "price", style: "font-size:1.3em" }, `합계 ${won(sum)}`),
+      el("p", { class: "sub small" }, "결제는 키오스크에서 해요. 금액은 키오스크 가격표로 다시 계산돼요.")),
+    el("button", { type: "button", class: "block", onclick: () => sendToKiosk(sum) }, "키오스크로 주문 보내기(시연)"),
     el("button", { type: "button", class: "block ghost", onclick: home }, "더 고르기"));
-  // v0.5.1: 읽어 주기 — 결제 전 확인은 품목마다 알레르기 문장까지 읽음
+  // v0.5.1: 읽어 주기 — 품목마다 알레르기 문장까지
   say("결제 전에 확인하세요. " + cart.map((c) => `${c.label}. ${allergyLine(viewItem(byId[c.id], store, codes.has("EASY")))}`).join(" "));
 }
 
-function pay(sum) {
-  const no = "A-" + String(10 + Math.floor(Math.random() * 90));
+// v0.6(3차 내부 점검 B·D: 「결제하기」 → 「키오스크로 주문 보내기」, 주문 번호는 키오스크가 발급) — 서버 없이 주문 QR로 넘김.
+// 한 기기 시연 화면에서는 같은 기기 채널로도 보내고, 키오스크가 발급한 번호를 받아 크게 보여 준다
+let sentRef = null;
+function sendToKiosk(sum) {
+  const items = cart.map((c) => ({ id: c.id, temp: c.temp, on: c.on }));
+  const code = encodeOrder(store.menu.store_id, store.menu.menu_ver || "", k, items);
   const lines = cart.map((c) => c.label);
-  const paid = cart.slice();
-  cart.length = 0; // v0.3(1차 모의 심사 B 실측): 결제하면 바로 비워 같은 주문이 두 번 들어가지 않게
+  cart.length = 0; // v0.3: 보내면 바로 비워 같은 주문이 두 번 들어가지 않게
   document.getElementById("cartn").textContent = 0;
-  channel().postMessage({ type: "order", k, no, lines, items: paid.map((c) => ({ id: c.id, temp: c.temp, on: c.on })), total: sum });
-  screen(`주문했어요 — 번호 ${no}`,
-    el("div", { class: "card" }, el("p", {}, "시연이라 실제 결제는 되지 않았어요."), el("p", {}, `합계 ${won(sum)}`)),
-    el("p", { class: "sub small" }, "실제 서비스에서는 이 주문이 키오스크로 넘어가 결제됩니다(시제품은 같은 기기 시연 화면에서만 키오스크에 표시)."),
+  sentRef = "R" + Math.random().toString(36).slice(2, 8);
+  channel().postMessage({ type: "order", k, ref: sentRef, lines, items, total: sum, mwq: code });
+  const qrBox = el("div", { class: "qrbox", id: "orderqr" });
+  try { const q = qrcode(0, "M"); q.addData(code); q.make(); qrBox.innerHTML = q.createSvgTag({ cellSize: 6, margin: 2, scalable: true }); const svg = qrBox.querySelector("svg"); if (svg) { svg.setAttribute("role", "img"); svg.setAttribute("aria-label", "내 방식 주문 QR — 키오스크의 「주문 QR 읽기」 카메라에 보여 주세요"); } }
+  catch (e) { qrBox.textContent = "QR을 그리지 못했어요 — 직원에게 이 화면을 보여 주세요"; }
+  screen("키오스크 카메라에 이 QR을 보여 주세요",
+    qrBox,
+    el("p", { class: "price", id: "issued", "aria-live": "off" }, "주문 번호는 키오스크가 알려 줘요"),
+    el("div", { class: "card" }, el("p", {}, `합계 ${won(sum)} — 결제는 키오스크에서 해요(시연이라 실제 결제는 되지 않아요).`),
+      el("p", { class: "sub small" }, "QR에는 메뉴와 고른 옵션 번호만 들어 있어요(금액·내 방식 설정은 넣지 않음). 키오스크가 자기 가격표로 다시 계산해요.")),
+    el("details", { class: "small" }, el("summary", {}, "QR 내용 보기"), el("code", { id: "mwq" }, code)),
     el("button", { type: "button", class: "block ghost", onclick: home }, "처음으로"));
+  say("키오스크 카메라에 이 큐알을 보여 주세요. 결제는 키오스크에서 해요.");
 }
+channel().addEventListener("message", (ev) => {
+  const m = ev.data || {};
+  if (m.type !== "issued" || !sentRef || m.ref !== sentRef) return;
+  const box = document.getElementById("issued");
+  if (box) { box.textContent = `주문 번호 ${String(m.no).slice(0, 8)} — 키오스크가 발급했어요`; box.style.fontSize = "1.6em"; }
+  document.getElementById("live").textContent = `주문 번호 ${m.no}`;
+  say(`주문 번호, ${String(m.no).split("").join(" ")}`);
+});
 
 document.getElementById("staff").onclick = () => {
   channel().postMessage({ type: "staff", k });
-  // v0.4(2차 모의 심사 E): 하던 주문을 지우지 않고 화면 위에 알림만 띄운다
-  // v0.5(3차 모의 심사: 아래로 내린 화면에서 누르면 알림이 화면 밖) — 화면 위에 고정(쪽을 넘겨도 닫을 때까지 남음)
+  // v0.4·v0.5: 하던 주문을 지우지 않고, 화면 위에 고정한 알림만
   const old = document.getElementById("staffnote"); if (old) old.remove();
   const note = el("div", { class: "card notice staffnote", id: "staffnote", role: "status" },
     el("b", {}, "직원을 불렀어요"), el("p", {}, "잠시만 기다려 주세요. 하던 주문은 그대로 있어요. (시연: 한 기기 시연 화면에서만 키오스크에 표시되고, 실제 호출은 되지 않아요)"),
@@ -202,12 +284,12 @@ document.getElementById("staff").onclick = () => {
   document.getElementById("live").textContent = "직원을 불렀어요. 하던 주문은 그대로 있어요.";
   say("직원을 불렀어요. 하던 주문은 그대로 있어요.");
 };
-document.getElementById("cartbtn").onclick = confirmOrder;
-// v0.4(2차 모의 심사 B·E 재현: 한 기기 시연의 방식 단추가 # 뒤만 바꿔 화면이 그대로이던 회귀) — 주소의 # 가 바뀌면 프로필을 다시 읽어 처음 화면으로
+document.getElementById("cartbtn").onclick = () => go(confirmOrder);
+// v0.4: 한 기기 시연의 방식 단추가 # 뒤만 바꾸면 프로필을 다시 읽어 처음 화면으로
 window.addEventListener("hashchange", () => {
   const p = profileFromUrl();
   if (!p) return;
-  profile = p; codes = applyProfile(profile); firstScreen = true; home();
+  profile = p; codes = applyProfile(profile); applyPlan(); firstScreen = true; home();
 });
 start();
 </script>
