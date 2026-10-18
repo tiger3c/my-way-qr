@@ -1,5 +1,5 @@
 // v0.6 — AI 화면 구성안(사전질의 답변서2 2번: "최초 적용 시에는 반드시 AI로 각 조건별 화면을 만들어 … 초기 시제품에서도 화면 변환은 AI가")
-// 매장 메뉴판을 처음 등록할 때, 기능 코드 조합(6개 → 64가지)마다 AI가 '화면 구성안'(목록에 보일 정보·한 쪽 개수·설명 접기·옵션 묻는 방식·
+// 매장 메뉴판을 처음 등록할 때, 기능 코드 조합(6개 → 64가지)마다 AI가 '화면 구성안'(목록에 보일 정보·처음 보일 메뉴 수·설명 접기·옵션 묻는 방식·
 // 글씨·단추 크기·읽어 줄 것·첫 화면 안내 한 줄)을 만든다 → 코드가 검증·보정 → 조합별로 저장(케이스별 저장) → 손님 화면은 저장본을 바로 쓴다.
 // 구성안이 바꿀 수 없는 것(코드가 항상 지킴): 메뉴 이름·가격 표시, 담기 전·결제 전 알레르기 표시, 「직원 부르기」, 매장 원본 값.
 // 같은 파일을 앱(운영자 화면·손님 화면)과 일괄 생성 스크립트(node validate_plans.mjs, Python gen_plans.py가 읽는 prompt_plan.json)가 함께 쓴다.
@@ -147,7 +147,7 @@ export function validatePlan(raw, codes, summary) {
   if (has("TOUCH") && p.button_pct < 140) { fixes.push(`큰 버튼인데 단추 ${p.button_pct}% → 160%`); p.button_pct = 160; }
   if (!has("TOUCH") && p.button_pct > 120 && !has("BIG")) { fixes.push(`큰 버튼을 고르지 않았는데 단추 ${p.button_pct}% → 120%`); p.button_pct = 120; } // 큰 글씨는 단추도 커야 글이 들어감
   if (has("ONE") && p.options !== "하나씩") { fixes.push("한 화면에 한 가지씩인데 옵션을 한 화면에 모두 → 하나씩"); p.options = "하나씩"; }
-  if (has("ONE") && p.per_page > 4) { fixes.push(`한 화면에 한 가지씩인데 한 쪽 ${p.per_page}개 → 4개`); p.per_page = 4; }
+  if (has("ONE") && p.per_page > 4) { fixes.push(`한 화면에 한 가지씩인데 처음 보일 메뉴 ${p.per_page}개 → 4개`); p.per_page = 4; }
   if (has("VOICE")) {
     for (const must of ["가격", "알레르기"]) if (!p.read.includes(must)) { fixes.push(`읽어 주기인데 「${must}」을(를) 읽지 않음 → 추가`); p.read.push(must); }
     if (!p.read.includes("제목")) { fixes.push("읽어 주기인데 화면 제목을 읽지 않음 → 추가"); p.read.unshift("제목"); }

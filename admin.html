@@ -166,7 +166,7 @@ const comboSel = document.getElementById("planCombo");
 const labelOf = (codes) => codes.length ? codes.map((c) => CODE_KO[c]).join(" + ") : "기본 화면(기능 없음)";
 for (const c of allCombos()) comboSel.append(el("option", { value: comboKey(c) }, `${labelOf(c)}`));
 const codesOf = (key) => key === "기본" ? [] : key.split(".");
-const fmt = (p) => p ? `글씨 ${p.text_pct}% · 단추 ${p.button_pct}% · 목록 ${p.list_show}·한 쪽 ${p.per_page}개 · 설명 ${p.detail} · 옵션 ${p.options}${p.read && p.read.length ? " · 읽기 " + p.read.join("·") : ""}` : "—";
+const fmt = (p) => p ? `글씨 ${p.text_pct}% · 단추 ${p.button_pct}% · 목록 ${p.list_show}·처음 ${p.per_page}개 · 설명 ${p.detail} · 옵션 ${p.options}${p.read && p.read.length ? " · 읽기 " + p.read.join("·") : ""}` : "—";
 function showPlan(key, override) {
   const codes = codesOf(key);
   const row = override || (plans && plans.rows[key]) || null;
