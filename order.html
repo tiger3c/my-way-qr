@@ -270,17 +270,35 @@ function showOrderQR(last) {
   const qrBox = el("div", { class: "qrbox", id: "orderqr" });
   try { const q = qrcode(0, "M"); q.addData(last.code); q.make(); qrBox.innerHTML = q.createSvgTag({ cellSize: 6, margin: 2, scalable: true }); const svg = qrBox.querySelector("svg"); if (svg) { svg.setAttribute("role", "img"); svg.setAttribute("aria-label", "내 방식 주문 QR — 키오스크의 「주문 QR 읽기」 카메라에 보여 주세요"); } }
   catch (e) { qrBox.textContent = "QR을 그리지 못했어요 — 직원에게 이 화면을 보여 주세요"; }
+  // v0.7.1(10-23 영상 재캡처에서 발견: 390×844 큰 글씨에서 3단계 안내가 QR을 밀어 QR 아래가 「직원 부르기」 줄에 가림 — 화면을 내려야 키오스크에 비출 수 있었음)
+  //   → QR을 제목 바로 아래, 3단계 안내는 QR 바로 아래(문구 그대로). 그래도 첫 화면에 다 안 들어가면 QR을 남은 높이에 맞게 줄이고(fitOrderQR)
   screen("키오스크 카메라에 이 QR을 보여 주세요",
+    qrBox,
     // v0.7(4차 내부 점검 E): 다음 할 일을 보이는 글로(전에는 aria-label에만 있었음)
     el("ol", { class: "steps" }, el("li", {}, "키오스크 화면에서 「주문 QR 읽기」를 누르세요"), el("li", {}, "이 QR을 키오스크 카메라에 비추세요"), el("li", {}, "주문 번호는 키오스크 화면에 나오고, 소리로도 알려 줘요")),
-    qrBox,
     el("p", { class: "issued", id: "issued", "aria-live": "off" }, "주문 번호는 키오스크가 알려 줘요"),
     el("div", { class: "card" }, el("p", {}, `합계 ${won(last.sum)} — 결제는 키오스크에서 해요(시연이라 실제 결제는 되지 않아요).`),
       el("p", { class: "sub small" }, "QR에는 메뉴와 고른 옵션 번호, 같은 주문을 두 번 받지 않게 하는 주문 표시 네 글자만 들어 있어요(금액·내 방식 설정은 넣지 않음). 키오스크가 자기 가격표로 다시 계산해요.")),
     el("details", { class: "small" }, el("summary", {}, "QR 내용 보기"), el("code", { id: "mwq" }, last.code)),
     el("button", { type: "button", class: "block ghost", onclick: home }, "처음으로"));
+  fitOrderQR(true);
   say("키오스크에서 주문 큐알 읽기를 누르고, 이 큐알을 카메라에 비추세요. 결제는 키오스크에서 해요.");
 }
+// v0.7.1: 주문 QR(흰 여백 포함)이 첫 화면에서 아래 단추 줄 위에 다 보이게 — 넘치면 QR을 줄이고(최소 QR_MIN), 그래도 넘치면 QR이 다 보이게 쪽을 내림
+//   QR_MIN 180px = 품목 1~5개 주문 QR(여백 포함 37~45칸)에서 한 칸 4~5px(휴대폰 화면에서 약 3cm) · 화면 방향이 바뀌면(폭이 바뀌면) 다시 맞춤
+const QR_MAX = 240, QR_MIN = 180;
+function fitOrderQR(scroll) {
+  const box = document.getElementById("orderqr"), svg = box && box.querySelector("svg");
+  if (!svg) return;
+  const bar = document.getElementById("bar");
+  const limit = window.innerHeight - (bar ? bar.getBoundingClientRect().height : 0) - 8; // 아래 단추 줄 윗선보다 8px 위
+  svg.style.width = svg.style.height = "";
+  const over = box.getBoundingClientRect().bottom - limit;
+  if (over > 0) { const s = Math.max(QR_MIN, Math.floor(QR_MAX - over)); svg.style.width = svg.style.height = s + "px"; }
+  if (scroll) { const b = box.getBoundingClientRect().bottom; if (b > limit) window.scrollBy(0, Math.ceil(b - limit)); }
+}
+let lastW = window.innerWidth;
+window.addEventListener("resize", () => { if (window.innerWidth === lastW) return; lastW = window.innerWidth; fitOrderQR(false); }); // 주소창이 숨거나 나올 때(높이만 바뀜)는 그대로
 channel().addEventListener("message", (ev) => {
   const m = ev.data || {};
   if (m.type !== "issued" || !sentRef || m.ref !== sentRef) return;
