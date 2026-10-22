@@ -127,3 +127,16 @@ details code { word-break: break-all; font-size: 0.85em; }
 .hero { font-size: 1.08em; line-height: 1.6; }
 .hero-btn { min-height: calc(var(--btn-h) * 1.4); font-size: 1.05em; }
 details > summary { cursor: pointer; min-height: var(--btn-h); display: flex; align-items: center; }
+/* v0.7(4차 내부 점검) — 주문 번호 줄바꿈(B·E: 번호 글이 잘림) · 키오스크 큰 번호 · 눌린 선택 단추의 초점 이중색(A) · 시연 소식 숨김(E) · 단추 글 낱말 단위 줄바꿈(E) · 두 기기 직원 호출 큰 글 */
+.issued { white-space: normal; font-weight: 700; margin: 0.6em 0; }
+.issued .no { display: block; font-size: 1.8em; font-weight: 800; }
+.steps { margin: 0.4em 0 0.6em; padding-left: 1.4em; font-weight: 700; }
+.steps li { margin: 0.2em 0; }
+.kiosk-no { font-size: 40px; font-weight: 800; letter-spacing: 2px; margin: 6px 0; }
+.choice button[aria-pressed="true"]:focus-visible { box-shadow: inset 0 0 0 3px var(--accent), 0 0 0 8px #000; }
+.p-hc .choice button[aria-pressed="true"]:focus-visible { box-shadow: inset 0 0 0 3px var(--accent), 0 0 0 8px #fff; }
+.demonews[hidden] { display: none; }
+button, .btn { word-break: keep-all; overflow-wrap: anywhere; }
+.staffnote.big b { font-size: 1.3em; }
+.staffnote { word-break: keep-all; overflow-wrap: anywhere; }
+.staffnote.big p:first-of-type { font-size: 1.1em; font-weight: 700; }

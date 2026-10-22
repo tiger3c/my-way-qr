@@ -28,7 +28,7 @@
   <h2 id="plans">AI 화면 구성안 — 손님 기능 조합 64가지</h2>
   <p class="sub small" id="planhow"></p>
   <div class="card">
-    <div class="row"><label for="planCombo" class="sub small">조합</label><select id="planCombo" style="font:inherit; min-height:var(--btn-h)"></select>
+    <div class="row"><label for="planCombo" class="sub small">조합</label><select id="planCombo" style="font:inherit; min-height:var(--btn-h); max-width:100%"></select>
       <a id="planOpen" class="btn ghost" href="#" target="_blank" rel="noopener">손님 화면으로 보기</a>
       <button id="planRun" type="button" disabled>브라우저 AI로 이 조합 다시 만들기(시험 기능)</button></div>
     <div id="planView" class="live" aria-live="polite"></div>
@@ -38,21 +38,21 @@
   </details>
   <h2>화면 구성안 검사 직접 해 보기</h2>
   <div class="card">
-    <p class="sub small">조합을 고르고 구성안 JSON을 고쳐 보세요(예: 큰 글씨인데 글씨 100%, 읽어 주기인데 알레르기를 빼기, 안내 문장에 '어르신'). 코드가 무엇을 고치는지 바로 보여 줍니다(AI 없이 동작).</p>
-    <p><textarea id="planTry" rows="5" style="width:100%; font:inherit; font-size:0.85em; padding:8px; border-radius:10px"></textarea></p>
+    <p class="sub small">조합을 고르고 구성안 JSON을 고쳐 보세요(예: 큰 글씨인데 글씨 100%, 읽어 주기인데 알레르기를 빼기, 안내 문장에 '어르신'·'알레르기 걱정 없이'). 코드가 무엇을 고치는지 바로 보여 줍니다(AI 없이 동작, 저장하지 않음).</p>
+    <p><textarea id="planTry" aria-label="구성안 JSON(직접 고쳐 넣기)" rows="5" style="width:100%; font:inherit; font-size:0.85em; padding:8px; border-radius:10px"></textarea></p>
     <button id="planTryBtn" type="button">구성안 검사</button>
     <div id="planTryOut" class="live" aria-live="polite"></div>
   </div>
   <h2>쉬운 말 규칙 검사 직접 해 보기</h2>
   <div class="card">
     <p class="sub small">메뉴를 고르고 쉬운 말 설명을 직접 고쳐 넣어 보세요. AI가 이렇게 쓰면 어떤 규칙에 걸리는지 바로 보여 줍니다(AI 없이도 동작).</p>
-    <div class="row"><select id="pickItem" style="font:inherit; min-height:var(--btn-h)"></select></div>
-    <p><textarea id="tryDesc" rows="2" style="width:100%; font:inherit; padding:8px; border-radius:10px"></textarea></p>
-    <p><input id="tryOpts" style="width:100%; font:inherit; min-height:var(--btn-h); padding:0 8px; border-radius:10px" placeholder="옵션(쉼표로 나눔)"></p>
+    <div class="row"><select id="pickItem" aria-label="검사할 메뉴" style="font:inherit; min-height:var(--btn-h); max-width:100%"></select></div>
+    <p><textarea id="tryDesc" aria-label="쉬운 말 설명(직접 고쳐 넣기)" rows="2" style="width:100%; font:inherit; padding:8px; border-radius:10px"></textarea></p>
+    <p><input id="tryOpts" aria-label="옵션(쉼표로 나눔)" style="width:100%; font:inherit; min-height:var(--btn-h); padding:0 8px; border-radius:10px" placeholder="옵션(쉼표로 나눔)"></p>
     <button id="tryBtn" type="button">규칙 검사</button>
     <div id="tryOut" class="live" aria-live="polite"></div>
   </div>
-  <p class="foot">모델: Qwen2.5-1.5B-Instruct(Apache-2.0) · 실행: WebLLM 0.2.86(Apache-2.0, WebGPU) · 규칙(v0.5): 원문·용어 사전·조립 낱말에 없는 낱말 차단(닫힌 낱말 목록), 옵션 이름은 정해진 쉬운 말과 글자 그대로, 숫자·수량(아라비아·한글 수사)이 원문과 같아야 함, 원문 재료 빠짐, 알레르기 성분을 빼거나 줄이거나 바꾸는 말, 원문에 없는 건강·질병·효능·식이·안심·가격·순위·맛·원산지·신선도 주장, 빠진 카페인 정보, 온도 함정, 지어낸 조리법, 옵션 개수·뜻, 명령문, 길이, 특수 문자. 규칙은 시험 문장에 맞춰 고쳐 온 것이라 처음 보는 오답은 일부만 막습니다 — 고치기 전에 처음 본 틀린 문장은 세트에 따라 44~92%만 막았습니다(v0.4 규칙, 작성자가 다른 두 세트 — 내부 점검위원 역할의 AI 페르소나 5명이 쓴 134개 · 규칙을 만든 Claude가 쓴 24개, 사람이 쓴 시험은 아직 없음). v0.5는 고칠 때 본 세트에서만 재어(98~100%) 실력보다 높게 나옵니다. 맞는 문장도 세트에 따라 6~21%를 막아 원문 유지로 돌립니다. 지금 표의 결과는 같은 모델을 개발 PC CPU(llama.cpp)에서 돌린 것이고, 사람이 승인하지 않은 시연용입니다. <a href="index.html">처음으로</a></p>
+  <p class="foot">모델: Qwen2.5-1.5B-Instruct(Apache-2.0) · 실행: WebLLM 0.2.86(Apache-2.0, WebGPU) · 규칙(v0.5): 원문·용어 사전·조립 낱말에 없는 낱말 차단(닫힌 낱말 목록), 옵션 이름은 정해진 쉬운 말과 글자 그대로, 숫자·수량(아라비아·한글 수사)이 원문과 같아야 함, 원문 재료 빠짐, 알레르기 성분을 빼거나 줄이거나 바꾸는 말, 원문에 없는 건강·질병·효능·식이·안심·가격·순위·맛·원산지·신선도 주장, 빠진 카페인 정보, 온도 함정, 지어낸 조리법, 옵션 개수·뜻, 명령문, 길이, 특수 문자. 규칙은 모두 막지 못합니다 — v0.5 규칙을 고정한 뒤 처음 본 시험 문장(내부 점검위원 역할의 AI 페르소나 5명이 새로 쓴 168개, 사람이 쓴 시험은 아직 없음)에서 틀린 문장 122개 중 119개(97.5%)를 막았고, 낱말은 원문 그대로인데 합계·위아래 관계·재료 짝이 바뀐 문장 3개는 놓쳤습니다. 맞는 문장도 46개 중 12개를 막아 매장 설명 바탕으로 돌립니다. 같은 세트에서 이전 v0.4 규칙은 77.9%였습니다. 지금 표의 결과는 같은 모델을 개발 PC CPU(llama.cpp)에서 돌린 것이고, 사람이 승인하지 않은 시연용입니다. <a href="index.html">처음으로</a></p>
 </main>
 <script type="module">
 import { loadStore, viewItem, reviewOf, saveReview, el } from "./js/common.js";
@@ -166,6 +166,8 @@ const comboSel = document.getElementById("planCombo");
 const labelOf = (codes) => codes.length ? codes.map((c) => CODE_KO[c]).join(" + ") : "기본 화면(기능 없음)";
 for (const c of allCombos()) comboSel.append(el("option", { value: comboKey(c) }, `${labelOf(c)}`));
 const codesOf = (key) => key === "기본" ? [] : key.split(".");
+// v0.7: 또렷한 색 조합은 또렷한 색만 뺀 조합의 저장 구성과 같아야 함(검증의 sibling)
+const siblingOf = (codes) => (codes.includes("HC") && plans && plans.rows[comboKey(codes.filter((c) => c !== "HC"))]) ? plans.rows[comboKey(codes.filter((c) => c !== "HC"))].plan : null;
 const fmt = (p) => p ? `글씨 ${p.text_pct}% · 단추 ${p.button_pct}% · 목록 ${p.list_show}·처음 ${p.per_page}개 · 설명 ${p.detail} · 옵션 ${p.options}${p.read && p.read.length ? " · 읽기 " + p.read.join("·") : ""}` : "—";
 function showPlan(key, override) {
   const codes = codesOf(key);
@@ -193,9 +195,10 @@ if (plans) document.querySelector("#plantbl tbody").replaceChildren(...allCombos
 document.getElementById("planTryBtn").onclick = () => {
   const out = document.getElementById("planTryOut");
   let raw = null; try { raw = JSON.parse(document.getElementById("planTry").value); } catch (e) { raw = null; }
-  const r = validatePlan(raw, codesOf(comboSel.value), summary);
-  out.replaceChildren(el("div", { class: "card " + (r.fixes.length ? "allergy" : "") }, el("b", {}, r.verdict), el("p", { class: "small" }, fmt(r.plan)),
-    r.fixes.length ? el("ul", { class: "small" }, ...r.fixes.map((f) => el("li", {}, f))) : el("p", { class: "small" }, "고칠 것 없음 — 이대로 저장됩니다")));
+  const r = validatePlan(raw, codesOf(comboSel.value), summary, siblingOf(codesOf(comboSel.value)));
+  // v0.7(4차 내부 점검 C·D): 사람이 넣은 JSON을 'AI 구성안'으로 부르지 않고, 저장하지 않는다는 것을 그대로
+  out.replaceChildren(el("div", { class: "card " + (r.fixes.length ? "allergy" : "") }, el("b", {}, r.verdict.replace(/^AI 구성안/, "입력한 구성안")), el("p", { class: "small" }, fmt(r.plan)),
+    r.fixes.length ? el("ul", { class: "small" }, ...r.fixes.map((f) => el("li", {}, f))) : el("p", { class: "small" }, "고칠 것 없음(검사만 — 저장하지 않음)")));
 };
 document.getElementById("planRun").disabled = !adapter;
 document.getElementById("planRun").onclick = async () => {
@@ -208,7 +211,7 @@ document.getElementById("planRun").onclick = async () => {
     msgs.push({ role: "user", content: planUserMessage(summary, codes) });
     const r = await engine.chat.completions.create({ messages: msgs, response_format: { type: "json_object", schema: JSON.stringify(PLAN_SCHEMA) }, temperature: 0.3, max_tokens: 220 });
     let raw = null; try { raw = JSON.parse(r.choices[0].message.content); } catch (e) { raw = null; }
-    const v = validatePlan(raw, codes, summary);
+    const v = validatePlan(raw, codes, summary, siblingOf(codes));
     showPlan(key, { raw, plan: v.plan, fixes: v.fixes, verdict: v.verdict + " · 브라우저 실행(저장 안 함)" });
   } catch (e) { document.getElementById("planView").prepend(el("p", { class: "sub" }, "브라우저 AI 실행 실패: " + (e && e.message ? e.message : e))); }
   btn.disabled = false;

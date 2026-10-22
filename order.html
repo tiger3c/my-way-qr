@@ -89,7 +89,9 @@ function home() {
     el("p", { class: "sub small" }, on.length ? `내 방식: ${on.join(" · ")}` : "기본 화면"),
     ...cats.map((c) => el("button", { type: "button", class: "block", onclick: () => go(() => list(c)) }, c)),
     el("p", { class: "sub small" }, `${k ? `키오스크 번호 ${k} 매장의 메뉴를 보고 있어요.` : "매장 메뉴를 보고 있어요."} 가격은 매장 원래 가격 그대로예요.`),
+    lastQR() ? el("button", { type: "button", class: "block ghost", onclick: () => go(() => showOrderQR(lastQR())) }, "방금 만든 주문 QR 다시 보기") : null, // v0.7(4차 내부 점검 E·B)
     el("p", { class: "sub small plan-note" }, `화면 구성: ${P.verdict.startsWith("AI") ? "AI가 만든 구성안을 규칙으로 검증" + (P.fixes.length ? `(보정 ${P.fixes.length})` : "") + (store.plans && store.plans.review ? ` · ${store.plans.review}` : "") : "기본 구성"}`));
+  if (reads("제목") && P.plan.greeting) say(`${store.menu.store}, 무엇을 드릴까요? ${P.plan.greeting}`); // v0.7(A): 읽어 주기면 안내 한 줄도 읽음
 }
 
 // 목록에 보일 짧은 설명 — 첫 문장(마침표·쉼표 앞) 18자까지
@@ -120,13 +122,14 @@ function stepsOf(v) {
 
 function item(v) {
   const steps = stepsOf(v);
-  const pick = { temp: null, on: new Set() };
+  const pick = { temp: null, on: new Set(), ans: new Set() }; // ans: 네/아니요를 실제로 누른 질문(v0.7 E: 「아니요」가 처음부터 눌린 것처럼 보임)
   let onePerScreen = P.plan.options === "하나씩";
   let fold = P.plan.detail === "접기";
   let guard = null;       // v0.6 실행 중 보정: 이 화면에서 '담기'가 화면 밖이면 접기 → 하나씩
-  let showDesc = false;   // 접기일 때 「설명 보기」를 눌렀는지
-  const descCard = () => el("div", { class: "card" },
-    el("div", { class: "row" }, el("b", { class: "grow" }, v.name), el("span", { class: "price" }, won(v.price))),
+  let compact = false;    // v0.7(4차 내부 점검 C: 큰 글씨+읽어 주기에서 아메리카노 「확인했어요」가 아래 줄에 18~20px 가림) — 접어도 넘치면 제목을 줄임(이름·가격은 바로 아래 줄에 있음)
+  let showDesc = codes.has("EASY"); // 접기일 때 설명을 보일지 — v0.7(4차 내부 점검 A·E): 쉬운 말을 고른 손님은 접는 구성에서도 설명을 단추 아래에 펼쳐 둠
+  const descCard = (head = true) => el("div", { class: "card", id: "desccard" }, // head=false: 위에 이름·가격 줄(miniHead)이 이미 있을 때
+    head ? el("div", { class: "row" }, el("b", { class: "grow" }, v.name), el("span", { class: "price" }, won(v.price))) : null,
     el("p", {}, v.desc),
     el("span", { class: "tag " + (v.source === "AI 쉬운 말" ? "ai" : "orig") }, (SOURCE_LABEL[v.source] || "매장 설명 그대로") + (v.review ? ` · ${v.review}` : ""))); // v0.5: 승인 상태
   // 고르는 화면의 짧은 머리(이름·가격) — 글씨 > 단추 > 설명(답변서2 4번)
@@ -152,13 +155,14 @@ function item(v) {
       if (si < 0) {
         // 접기: 이름·가격 → 알레르기 → 확인 단추 → 설명 보기(글씨 > 단추 > 설명, 답변서2 4번) / 펼침: 설명 → 알레르기 → 확인 단추
         const okBtn = el("button", { type: "button", class: "block", "data-act": "ok", onclick: () => { si = 0; render(); } }, steps.length ? "확인했어요 — 고르기 시작" : "확인했어요");
-        screen(`${v.name} — 설명과 알레르기를 확인하세요`,
-          ...(fold ? [miniHead(), allergyBox(v), okBtn, showDesc ? descCard() : null, descToggle()] : [descCard(), allergyBox(v), okBtn]),
+        screen(compact ? "설명과 알레르기를 확인하세요" : `${v.name} — 설명과 알레르기를 확인하세요`,
+          ...(fold ? [miniHead(), allergyBox(v), okBtn, descToggle(), showDesc ? descCard(false) : null] : [descCard(), allergyBox(v), okBtn]), // v0.7(A): 「설명 보기」 단추 뒤에 설명(화면 읽기 순서)
           guard ? el("p", { class: "sub small" }, guard) : null, // 보정 안내는 단추 아래(첫 화면 높이를 쓰지 않게)
           el("button", { type: "button", class: "block ghost", onclick: () => list(v.category) }, "← 다른 메뉴"));
         if (!again) {
           // v0.6 실행 중 보정 — 확인 단추가 아래 단추 줄에 가리거나 화면 밖이면 설명을 접음
           if (!fold && overLimit(okBtn)) { fold = true; guard = guard || "화면에 다 들어가지 않아 설명을 접었어요"; return render(); }
+          if (fold && !compact && overLimit(okBtn)) { compact = true; return render(); }
           sayItem();
         }
         return;
@@ -168,7 +172,7 @@ function item(v) {
       screen(s.title, miniHead(), stepBox(s, true), el("button", { type: "button", class: "block ghost", onclick: () => { si--; render(); } }, "← 뒤로"));
       return;
     }
-    const descPart = fold ? [showDesc ? descCard() : null, descToggle()] : [descCard()];
+    const descPart = fold ? [descToggle(), showDesc ? descCard(false) : null] : [descCard()];
     // 접기: 이름·가격 → 알레르기 → 고를 것 → 담기 → 설명 보기 / 펼침: 설명 → 알레르기 → 고를 것 → 담기
     screen(v.name, fold ? miniHead() : null, ...(fold ? [] : descPart), allergyBox(v),
       ...steps.map((s) => el("div", { class: "card" }, el("b", {}, s.title), stepBox(s, false))),
@@ -181,7 +185,8 @@ function item(v) {
       const b = app.querySelector('[data-act="add"]');
       if (b && overLimit(b)) {
         if (!fold) { fold = true; guard = "화면에 다 들어가지 않아 설명을 접었어요"; return render(); }
-        onePerScreen = true; si = -1; guard = "고를 것이 많아 하나씩 물어볼게요"; return render();
+        // v0.7(4차 내부 점검 A·B·E): 하나씩으로 바꾸면 설명 접기를 구성안대로 되돌리고 다시 잼(자리가 남으면 펼친 채) · 안내는 실제 이유대로
+        onePerScreen = true; si = -1; fold = P.plan.detail === "접기"; guard = "화면에 다 들어가지 않아 하나씩 물어볼게요"; return render();
       }
       sayItem();
     }
@@ -194,8 +199,8 @@ function item(v) {
     const i = s.idx[0];
     const extra = v.extra[i] ? ` (+${won(v.extra[i])})` : "";
     return el("div", { class: "choice" },
-      el("button", { type: "button", "data-k": `yes-${i}`, "aria-pressed": pick.on.has(i) ? "true" : "false", onclick: () => { pick.on.add(i); next(`yes-${i}`); } }, `네${extra}`),
-      el("button", { type: "button", "data-k": `no-${i}`, "aria-pressed": !pick.on.has(i) ? "true" : "false", onclick: () => { pick.on.delete(i); next(`no-${i}`); } }, "아니요"));
+      el("button", { type: "button", "data-k": `yes-${i}`, "aria-pressed": pick.on.has(i) ? "true" : "false", onclick: () => { pick.on.add(i); pick.ans.add(i); next(`yes-${i}`); } }, `네${extra}`),
+      el("button", { type: "button", "data-k": `no-${i}`, "aria-pressed": pick.ans.has(i) && !pick.on.has(i) ? "true" : "false", onclick: () => { pick.on.delete(i); pick.ans.add(i); next(`no-${i}`); } }, "아니요"));
   }
   function total() { return v.price + [...pick.on].reduce((s, i) => s + v.extra[i], 0); }
   function label() {
@@ -209,7 +214,7 @@ function item(v) {
       allergyBox(v), // v0.4: 담기 직전에도 항상(정보가 없으면 '직원에게 확인')
       el("button", { type: "button", class: "block", onclick: add }, "담기"),
       el("button", { type: "button", class: "block ghost", onclick: () => { si = steps.length ? steps.length - 1 : -1; render(); } }, "← 뒤로"),
-      el("button", { type: "button", class: "block ghost", onclick: () => { si = -1; pick.temp = null; pick.on.clear(); render(); } }, "처음부터 다시 고르기"));
+      el("button", { type: "button", class: "block ghost", onclick: () => { si = -1; pick.temp = null; pick.on.clear(); pick.ans.clear(); render(); } }, "처음부터 다시 고르기"));
     say(`이대로 담을까요? ${v.name}. ${allergyLine(v)}`); // v0.5.1: 담기 직전에도 알레르기 문장까지 읽음
   }
   function add() {
@@ -224,7 +229,8 @@ function item(v) {
 }
 
 function confirmOrder() {
-  if (!cart.length) { screen("아직 담은 것이 없어요", el("button", { type: "button", class: "block", onclick: home }, "메뉴 보기")); return; }
+  if (!cart.length) { screen("아직 담은 것이 없어요", el("button", { type: "button", class: "block", onclick: home }, "메뉴 보기"),
+    lastQR() ? el("button", { type: "button", class: "block ghost", onclick: () => go(() => showOrderQR(lastQR())) }, "방금 만든 주문 QR 다시 보기") : null); return; }
   const sum = cart.reduce((s, c) => s + c.price, 0);
   const byId = Object.fromEntries(store.menu.items.map((i) => [i.id, i]));
   // v0.5: 품목마다 알레르기 한 줄(담기 화면의 상자와 같은 근거)
@@ -243,47 +249,76 @@ function confirmOrder() {
 
 // v0.6(3차 내부 점검 B·D: 「결제하기」 → 「키오스크로 주문 보내기」, 주문 번호는 키오스크가 발급) — 서버 없이 주문 QR로 넘김.
 // 한 기기 시연 화면에서는 같은 기기 채널로도 보내고, 키오스크가 발급한 번호를 받아 크게 보여 준다
+// v0.7(4차 내부 점검 B·D): 주문마다 고유값(ref)을 QR에 넣어 키오스크가 같은 QR을 두 번 받지 않게 · (E·B) 방금 만든 QR은 이 탭에 보관해 뒤로·처음으로 뒤에도 다시 보기
 let sentRef = null;
+const LASTQR = "mywayqr.lastqr";
+function lastQR() { try { const x = JSON.parse(sessionStorage.getItem(LASTQR) || "null"); return x && x.code && Date.now() - x.at < 60 * 60 * 1000 ? x : null; } catch (e) { return null; } }
 function sendToKiosk(sum) {
   const items = cart.map((c) => ({ id: c.id, temp: c.temp, on: c.on }));
-  const code = encodeOrder(store.menu.store_id, store.menu.menu_ver || "", k, items);
+  sentRef = Math.random().toString(36).slice(2, 6).padEnd(4, "0");
+  const code = encodeOrder(store.menu.store_id, store.menu.menu_ver || "", k, items, sentRef);
   const lines = cart.map((c) => c.label);
   cart.length = 0; // v0.3: 보내면 바로 비워 같은 주문이 두 번 들어가지 않게
   document.getElementById("cartn").textContent = 0;
-  sentRef = "R" + Math.random().toString(36).slice(2, 8);
+  const last = { code, sum, ref: sentRef, at: Date.now() };
+  try { sessionStorage.setItem(LASTQR, JSON.stringify(last)); } catch (e) { /* 저장 못 하면 다시 보기만 없음 */ }
   channel().postMessage({ type: "order", k, ref: sentRef, lines, items, total: sum, mwq: code });
+  go(() => showOrderQR(last));
+}
+function showOrderQR(last) {
+  sentRef = last.ref;
   const qrBox = el("div", { class: "qrbox", id: "orderqr" });
-  try { const q = qrcode(0, "M"); q.addData(code); q.make(); qrBox.innerHTML = q.createSvgTag({ cellSize: 6, margin: 2, scalable: true }); const svg = qrBox.querySelector("svg"); if (svg) { svg.setAttribute("role", "img"); svg.setAttribute("aria-label", "내 방식 주문 QR — 키오스크의 「주문 QR 읽기」 카메라에 보여 주세요"); } }
+  try { const q = qrcode(0, "M"); q.addData(last.code); q.make(); qrBox.innerHTML = q.createSvgTag({ cellSize: 6, margin: 2, scalable: true }); const svg = qrBox.querySelector("svg"); if (svg) { svg.setAttribute("role", "img"); svg.setAttribute("aria-label", "내 방식 주문 QR — 키오스크의 「주문 QR 읽기」 카메라에 보여 주세요"); } }
   catch (e) { qrBox.textContent = "QR을 그리지 못했어요 — 직원에게 이 화면을 보여 주세요"; }
   screen("키오스크 카메라에 이 QR을 보여 주세요",
+    // v0.7(4차 내부 점검 E): 다음 할 일을 보이는 글로(전에는 aria-label에만 있었음)
+    el("ol", { class: "steps" }, el("li", {}, "키오스크 화면에서 「주문 QR 읽기」를 누르세요"), el("li", {}, "이 QR을 키오스크 카메라에 비추세요"), el("li", {}, "주문 번호는 키오스크 화면에 나오고, 소리로도 알려 줘요")),
     qrBox,
-    el("p", { class: "price", id: "issued", "aria-live": "off" }, "주문 번호는 키오스크가 알려 줘요"),
-    el("div", { class: "card" }, el("p", {}, `합계 ${won(sum)} — 결제는 키오스크에서 해요(시연이라 실제 결제는 되지 않아요).`),
-      el("p", { class: "sub small" }, "QR에는 메뉴와 고른 옵션 번호만 들어 있어요(금액·내 방식 설정은 넣지 않음). 키오스크가 자기 가격표로 다시 계산해요.")),
-    el("details", { class: "small" }, el("summary", {}, "QR 내용 보기"), el("code", { id: "mwq" }, code)),
+    el("p", { class: "issued", id: "issued", "aria-live": "off" }, "주문 번호는 키오스크가 알려 줘요"),
+    el("div", { class: "card" }, el("p", {}, `합계 ${won(last.sum)} — 결제는 키오스크에서 해요(시연이라 실제 결제는 되지 않아요).`),
+      el("p", { class: "sub small" }, "QR에는 메뉴와 고른 옵션 번호, 같은 주문을 두 번 받지 않게 하는 주문 표시 네 글자만 들어 있어요(금액·내 방식 설정은 넣지 않음). 키오스크가 자기 가격표로 다시 계산해요.")),
+    el("details", { class: "small" }, el("summary", {}, "QR 내용 보기"), el("code", { id: "mwq" }, last.code)),
     el("button", { type: "button", class: "block ghost", onclick: home }, "처음으로"));
-  say("키오스크 카메라에 이 큐알을 보여 주세요. 결제는 키오스크에서 해요.");
+  say("키오스크에서 주문 큐알 읽기를 누르고, 이 큐알을 카메라에 비추세요. 결제는 키오스크에서 해요.");
 }
 channel().addEventListener("message", (ev) => {
   const m = ev.data || {};
   if (m.type !== "issued" || !sentRef || m.ref !== sentRef) return;
   const box = document.getElementById("issued");
-  if (box) { box.textContent = `주문 번호 ${String(m.no).slice(0, 8)} — 키오스크가 발급했어요`; box.style.fontSize = "1.6em"; }
+  if (box) box.replaceChildren(el("b", { class: "no" }, `주문 번호 ${String(m.no).slice(0, 8)}`), el("span", {}, "키오스크가 발급했어요")); // v0.7(B·E): 번호 줄이 잘리지 않게(줄바꿈 허용, 번호만 크게)
   document.getElementById("live").textContent = `주문 번호 ${m.no}`;
   say(`주문 번호, ${String(m.no).split("").join(" ")}`);
 });
 
+// v0.7(4차 내부 점검 A·B·E): 두 기기(실제 휴대폰)에서는 호출 신호가 가지 않으므로, 직원에게 보여 줄 큰 글 화면으로. 한 기기 시연 화면 안에서만 키오스크에 표시
+const inDemo = (() => { try { return window.top !== window; } catch (e) { return true; } })();
+function closeStaffNote() { const n = document.getElementById("staffnote"); if (n) n.remove(); document.documentElement.style.scrollPaddingTop = ""; document.body.style.paddingTop = ""; }
 document.getElementById("staff").onclick = () => {
   channel().postMessage({ type: "staff", k });
   // v0.4·v0.5: 하던 주문을 지우지 않고, 화면 위에 고정한 알림만
-  const old = document.getElementById("staffnote"); if (old) old.remove();
-  const note = el("div", { class: "card notice staffnote", id: "staffnote", role: "status" },
-    el("b", {}, "직원을 불렀어요"), el("p", {}, "잠시만 기다려 주세요. 하던 주문은 그대로 있어요. (시연: 한 기기 시연 화면에서만 키오스크에 표시되고, 실제 호출은 되지 않아요)"),
-    el("button", { type: "button", class: "ghost", onclick: () => note.remove() }, "알림 닫기"));
+  closeStaffNote();
+  const note = inDemo
+    ? el("div", { class: "card notice staffnote", id: "staffnote", role: "status" },
+        el("b", {}, "직원을 불렀어요"), el("p", {}, "잠시만 기다려 주세요. 하던 주문은 그대로 있어요. (시연: 한 기기 시연 화면에서만 키오스크에 표시되고, 실제 호출은 되지 않아요)"),
+        el("button", { type: "button", class: "ghost", onclick: closeStaffNote }, "알림 닫기"))
+    : el("div", { class: "card notice staffnote big", id: "staffnote", role: "status" },
+        el("b", {}, "직원에게 이 화면을 보여 주세요"), el("p", {}, "내 방식으로 주문하는 중이에요. 도와주세요. 하던 주문은 그대로 있어요."),
+        el("p", { class: "sub small" }, "(시제품: 이 휴대폰에서는 직원에게 신호가 가지 않아요)"),
+        el("button", { type: "button", class: "ghost", onclick: closeStaffNote }, "알림 닫기"));
   document.body.append(note);
-  document.getElementById("live").textContent = "직원을 불렀어요. 하던 주문은 그대로 있어요.";
-  say("직원을 불렀어요. 하던 주문은 그대로 있어요.");
+  // v0.7(A, WCAG 2.2 2.4.11): 알림이 열린 동안 내용을 알림 높이만큼 아래로 밀고(맨 위 메뉴도 가리지 않게), 초점이 알림 밑에 들어가면 그만큼 올려 보임
+  const h = Math.ceil(note.getBoundingClientRect().bottom + 12);
+  document.body.style.paddingTop = h + "px"; document.documentElement.style.scrollPaddingTop = h + "px";
+  const msg = inDemo ? "직원을 불렀어요. 하던 주문은 그대로 있어요." : "직원에게 이 화면을 보여 주세요. 하던 주문은 그대로 있어요.";
+  document.getElementById("live").textContent = msg;
+  say(msg);
 };
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && document.getElementById("staffnote")) closeStaffNote(); }); // v0.7(A): Esc로 닫기
+document.addEventListener("focusin", (e) => {
+  const n = document.getElementById("staffnote"); if (!n || n.contains(e.target) || e.target.closest("#bar")) return;
+  const nb = n.getBoundingClientRect().bottom, r = e.target.getBoundingClientRect();
+  if (r.top < nb + 4) window.scrollBy(0, r.top - nb - 12);
+});
 document.getElementById("cartbtn").onclick = () => go(confirmOrder);
 // v0.4: 한 기기 시연의 방식 단추가 # 뒤만 바꾸면 프로필을 다시 읽어 처음 화면으로
 window.addEventListener("hashchange", () => {

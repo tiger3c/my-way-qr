@@ -99,7 +99,13 @@ export function defaultPlan(codes) {
 }
 
 // 안내 한 줄 검사 — 장애·질병·나이 말, 약속(가격·건강·맛), 문자, 길이, 끝맺음
-const BAN_WORDS = /장애|질병|질환|환자|노인|어르신|고령|노약|시각|청각|치매|약시|저시력|난독|문맹|어린이|아이|노안|건강|치료|효능|맛있|저렴|싸게|할인|무료|안전합|보장/;
+// v0.7(4차 내부 점검 A·C·D·E: 「알레르기 걱정 없이 고르세요」「몸이 불편하신 분」「500원 싸요」「직원 부르기는 누르지 않아도 돼요」가 통과) —
+// 안내 한 줄은 화면 방식만 말한다: 메뉴·성분·카페인·가격·몸 상태·직원 호출을 말하면 기본 문장
+const BAN_WORDS = /장애|질병|질환|환자|노인|어르신|고령|노약|시각|청각|치매|약시|저시력|난독|문맹|어린이|아이|노안|건강|치료|효능|맛있|저렴|싸게|할인|무료|안전합|보장|알레르기|성분|우유|견과|땅콩|밀가루|계란|달걀|카페인|걱정|안심|괜찮|마음껏|가격|값|[0-9]+ ?원|싸요|싸게|반값|공짜|불편|몸|눈이|안 보|잘 보|안 들|귀가|직원|주문하면|밤에|오늘/;
+const BAN_FORM = [ // 손님에게 시키는 말·뜻이 맞지 않는 말(저장본에서 나온 꼴)
+  [/주세요|보세요|하세요/, "손님에게 시키는 말"],
+  [/(쉬운 ?말|색|읽어 ?주기|설명|소리|화면|한 ?가지씩)[을를]? ?크게/, "크게 할 수 없는 것을 크게 했다고 함"],
+];
 const GREET_OK = /^[가-힣0-9\s.,·'"()!?~「」]*$/;
 // 안내 문장 속 기능 낱말 → 기능 코드(고르지 않은 기능을 말하면 보정)
 export const GREET_FEATURE = [
@@ -113,6 +119,7 @@ export function checkGreeting(g) {
   if (s.length > 50) why.push("길이 50자 넘음");
   if (!GREET_OK.test(s)) why.push("한글·기본 기호 밖 문자");
   const m = s.match(BAN_WORDS); if (m) why.push(`쓰지 않을 말 「${m[0]}」`);
+  for (const [re, name] of BAN_FORM) { const f = s.replace(/'설명 보기'를 누르세요/g, "").match(re); if (f) why.push(`${name} 「${f[0]}」`); } // 「'설명 보기'를 누르세요」만 안내로 허용
   if (!/요[.!]?$/.test(s)) why.push("'-요'로 끝나지 않음");
   return why;
 }
@@ -129,7 +136,9 @@ export function defaultGreeting(codes) {
 }
 
 // 검증·보정: AI 구성안 → { plan, fixes[], verdict }
-export function validatePlan(raw, codes, summary) {
+// v0.7(4차 내부 점검 A·C·D): '고르지 않은 기능은 그대로'를 코드로 — 또렷한 색은 색만(같은 조합에서 또렷한 색만 뺀 구성과 같게: sibling),
+// 한 가지씩을 안 골랐으면 한 화면에 모두(넘치면 실행 중 보정), 큰 글씨·쉬운 말·한 가지씩이 없으면 목록·설명은 매장 기본, 안내 문장은 실제 구성과 맞아야 함
+export function validatePlan(raw, codes, summary, sibling = null) {
   const has = (c) => codes.includes(c);
   const fixes = [];
   let p;
@@ -155,10 +164,23 @@ export function validatePlan(raw, codes, summary) {
   if (has("EASY") && p.list_show === "이름·가격" && p.detail === "접기" && !has("BIG")) {
     fixes.push("쉬운 말인데 설명이 목록에도 메뉴 화면에도 안 보임 → 메뉴 화면에서 펼침"); p.detail = "펼침";
   }
+  // v0.7 고르지 않은 기능은 그대로
+  if (!has("ONE") && p.options === "하나씩") { fixes.push("한 가지씩을 고르지 않았는데 하나씩 → 한 화면에 모두(넘치면 실행 중 보정)"); p.options = "한 화면에 모두"; }
+  if (!has("BIG") && !has("EASY") && !has("ONE") && (p.list_show !== "이름·가격·설명" || p.detail !== "펼침")) {
+    fixes.push("큰 글씨·쉬운 말·한 가지씩을 고르지 않았는데 목록·설명을 바꿈 → 매장 기본(이름·가격·설명, 펼침)"); p.list_show = "이름·가격·설명"; p.detail = "펼침";
+  }
+  if (has("BIG") && !has("TOUCH") && p.button_pct > 140) { fixes.push(`큰 버튼을 고르지 않았는데 단추 ${p.button_pct}% → 140%(큰 글씨가 들어갈 만큼)`); p.button_pct = 140; }
+  if (has("HC") && sibling) { // 또렷한 색은 색만 바꿈 — 구성은 또렷한 색만 뺀 조합과 같게
+    const L = ["list_show", "per_page", "detail", "options", "text_pct", "button_pct"];
+    const diff = L.filter((k) => p[k] !== sibling[k]);
+    if (diff.length) { fixes.push(`또렷한 색은 색만 바꾸는데 구성(${diff.join("·")})이 다름 → 또렷한 색 없는 조합과 같게`); for (const k of L) p[k] = sibling[k]; }
+  }
   // 첫 화면 안에 '담기' — 어림 계산 대신, 손님 화면이 그릴 때 실제 높이를 재서 넘치면 그 자리에서 설명 접기 → 하나씩 묻기(order.html 실행 중 보정)
   // 안내 한 줄 — 손님이 고르지 않은 기능을 말하면(「쉬운 말로 보여 드리고…」를 기본 화면에) 사실과 다름
   const gw = checkGreeting(p.greeting);
   for (const [code, re] of GREET_FEATURE) if (!has(code) && re.test(String(p.greeting || ""))) gw.push(`고르지 않은 기능(${CODE_KO[code]})을 말함`);
+  // v0.7(C·D·E): 「설명은 '설명 보기'를 누르세요」는 설명을 접는 구성에서만(쉬운 말이면 설명을 펼쳐 둠 — order.html)
+  if (/설명 ?보기/.test(String(p.greeting || "")) && (p.detail !== "접기" || has("EASY"))) gw.push("없는 「설명 보기」를 안내함(설명이 펼쳐진 구성)");
   if (gw.length) { fixes.push(`안내 문장(${gw.join(", ")}) → 기본 문장`); p.greeting = defaultGreeting(codes); }
   return { plan: p, fixes, verdict: fixes.length ? `AI 구성안(보정 ${fixes.length})` : "AI 구성안(검증 통과)" };
 }

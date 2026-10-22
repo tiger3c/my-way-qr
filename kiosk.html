@@ -19,7 +19,8 @@
   <button id="listen" class="block ghost" type="button">소리로 안내 듣기</button>
   <button id="scan" class="block ghost" type="button">주문 QR 읽기 — 휴대폰에서 만든 주문(카메라)</button>
   <p class="sub small">QR을 찾기 어려우면 「소리로 안내 듣기」를 누르세요. 키오스크 번호 네 자리를 읽어 드려요. (실제 기기에서는 음성 안내 버튼·이어폰 잭·점자 안내로 시작하도록 할 계획 — 이 시제품에는 없음)</p>
-  <div id="arrived" class="card notice" hidden aria-live="polite"></div>
+  <div id="arrived" class="card notice" hidden tabindex="-1"></div>
+  <p id="klive" class="sr-only" role="status"></p><!-- v0.7(4차 내부 점검 A): 도착·번호 안내는 처음부터 있는 상태 줄로(숨김 해제와 동시에 바뀌는 상자는 화면 읽기가 놓칠 수 있음) -->
   <div class="tabs" id="tabs"></div>
   <div class="grid" id="grid"></div>
   <p class="foot">이 화면은 '앱에 내 방식 QR 기능(SDK)을 넣은 키오스크'를 가정한 시연 화면입니다. 실제 주문·결제는 이루어지지 않습니다.</p>
@@ -40,8 +41,8 @@
     <div class="step-title" id="stitle">휴대폰의 주문 QR을 카메라에 보여 주세요</div>
     <video id="cam" playsinline muted style="width:100%; max-height:300px; background:#000; border-radius:10px" hidden></video>
     <p id="scanmsg" class="sub small" aria-live="polite">카메라를 켜는 중…</p>
-    <label class="btn block ghost" for="scanfile">사진으로 읽기(카메라가 없을 때)</label>
-    <input id="scanfile" type="file" accept="image/*" capture="environment" class="sr-only">
+    <button id="scanpick" class="block ghost" type="button">사진으로 읽기(카메라가 없을 때)</button>
+    <input id="scanfile" type="file" accept="image/*" capture="environment" class="sr-only" tabindex="-1" aria-hidden="true"><!-- v0.7(A): 초점은 단추가 받고 파일 입력은 단추가 엶 -->
     <button id="scanclose" class="block" type="button">닫기</button>
   </div>
 </div>
@@ -78,7 +79,7 @@ document.addEventListener("keydown", (e) => {
   if (!open) return;
   if (e.key === "Escape") { (open === modal ? document.getElementById("close") : document.getElementById("scanclose")).click(); return; } // v0.3(A): Esc로 닫고 초점 되돌리기
   if (e.key === "Tab") { // v0.6(3차 내부 점검 A P2): 창 안에서만 초점이 돌게
-    const f = [...open.querySelectorAll("button, a[href], label.btn")].filter((x) => !x.hidden && x.offsetParent !== null);
+    const f = [...open.querySelectorAll("button, a[href]")].filter((x) => !x.hidden && x.offsetParent !== null);
     if (!f.length) return;
     const i = f.indexOf(document.activeElement);
     if (e.shiftKey && (i <= 0)) { e.preventDefault(); f[f.length - 1].focus(); }
@@ -96,7 +97,14 @@ if (new URLSearchParams(location.search).get("open") === "qr") document.getEleme
 // v0.6(3차 내부 점검 B·D): 주문 번호는 키오스크가 발급(휴대폰은 받은 번호만 보여 줌)
 let seq = Number(sessionStorage.getItem("mywayqr.kseq") || "10");
 function issueNo() { seq = seq >= 99 ? 11 : seq + 1; sessionStorage.setItem("mywayqr.kseq", String(seq)); return `K-${seq}`; }
-const byId = Object.fromEntries(store.menu.items.map((i) => [i.id, i]));
+const byIdMap = new Map(store.menu.items.map((i) => [i.id, i])); // v0.7(B): '__proto__' 같은 id에도 안전하게
+const byId = { get: (id) => byIdMap.get(String(id)) };
+// v0.7(4차 내부 점검 B·D): 같은 주문 QR(같은 ref)을 다시 읽으면 새 번호를 내지 않음 — 이 키오스크가 받은 ref와 번호를 기억
+const SEEN = "mywayqr.kseen";
+const seenRefs = () => { try { return JSON.parse(sessionStorage.getItem(SEEN) || "{}"); } catch (e) { return {}; } };
+const rememberRef = (ref, no) => { try { const m = seenRefs(); m[ref] = no; sessionStorage.setItem(SEEN, JSON.stringify(m)); } catch (e) { /* 무시 */ } };
+const kspeak = (t) => { document.getElementById("klive").textContent = t; speak(t, true); };
+const spellNo = (no) => String(no).replace(/-/g, "").split("").join(", "); // K-11 → "K, 1, 1"
 const extraOf = (o) => { const x = String(o).match(/\+([\d,]+)원/); return x ? Number(x[1].replace(/,/g, "")) : 0; };
 const isTemp = (o) => o === "HOT" || o === "ICE";
 const TEMP_WORD = { HOT: "따뜻하게", ICE: "차갑게" };
@@ -104,17 +112,32 @@ function receiveOrder(m, via, pre = []) {
   modal.classList.remove("open");
   const box = document.getElementById("arrived");
   box.hidden = false;
+  // v0.7: 같은 주문(같은 ref)을 다시 받음 → 새 번호 없이 안내만(체크섬이 깨진 QR의 ref는 믿지 않음)
+  // 소리·초점은 키오스크 앞에서 QR을 읽었을 때만(한 기기 시연 채널로 받을 때는 시연 화면의 쪽·초점을 옮기지 않음 — 상태 줄 글만)
+  const atKiosk = via.startsWith("주문 QR");
+  const say = (t) => (atKiosk ? kspeak(t) : (document.getElementById("klive").textContent = t));
+  const ref = /^[0-9a-z]{1,8}$/i.test(String(m.ref || "")) ? String(m.ref) : "";
+  const damaged = pre.some((x) => x.includes("손상"));
+  if (ref && !damaged && seenRefs()[ref]) {
+    const prev = seenRefs()[ref];
+    box.replaceChildren(el("b", {}, `이미 받은 주문이에요 — 주문 번호 ${prev}`), el("div", { class: "sub" }, `같은 주문 QR을 다시 읽었어요. 새 주문으로 받지 않았어요(${via}).`));
+    say(`이미 받은 주문이에요. 주문 번호, ${spellNo(prev)}`);
+    if (atKiosk) box.focus({ preventScroll: false });
+    if (m.ref) channel().postMessage({ type: "issued", k: m.k, ref: m.ref, no: prev });
+    return prev;
+  }
   const warn = [...pre];
   if (String(m.k || "") !== k) warn.push(m.k ? `다른 키오스크 번호(${String(m.k).replace(/\D/g, "").slice(0, 4)})로 보낸 주문이에요 — 이 키오스크(${k}) 주문이 아니에요` : "키오스크 번호가 없는 주문이에요");
   const lines = [];
   let mine = 0;
-  const items = Array.isArray(m.items) ? m.items : [];
+  const items = Array.isArray(m.items) ? m.items.slice(0, 20) : [];
+  if (Array.isArray(m.items) && m.items.length > 20) warn.push(`품목이 너무 많아요(${m.items.length}줄 — 20줄까지만 받아요)`); // v0.7(B)
   if (!items.length) warn.push("주문 품목을 읽을 수 없어요");
   if (Array.isArray(m.lines) && m.lines.length !== items.length) warn.push(`품목 수가 맞지 않아요(휴대폰 글 ${m.lines.length}줄 · 품목 ${items.length}개)`);
   items.forEach((c, n) => {
-    const it = byId[c && c.id];
+    const it = byId.get(c && c.id);
     if (!it) { warn.push(`${n + 1}번 품목: 이 매장 메뉴에 없는 메뉴예요`); return; }
-    if (c.qty != null && c.qty !== 1) warn.push(`${n + 1}번 품목(${it.name}): 수량 ${String(c.qty).slice(0, 4)} — 한 줄에 1개만 받아요`);
+    if (c.qty != null && c.qty !== 1) warn.push(`${n + 1}번 품목(${it.name}): ${Number.isFinite(c.qty) ? `수량 ${String(c.qty).slice(0, 4)}` : "수량을 읽을 수 없어요"} — 한 줄에 1개만 받아요`);
     const temps = it.options.map((o, i) => (isTemp(o) ? i : -1)).filter((i) => i >= 0);
     const parts = [];
     if (c.temp != null) {
@@ -132,14 +155,38 @@ function receiveOrder(m, via, pre = []) {
     mine += price;
     lines.push(el("li", {}, `${it.name}${parts.length ? ` (${parts.join(", ")})` : ""} — ${won(price)}`));
   });
-  const no = issueNo();
-  const kids = [el("b", {}, `내 방식 주문이 도착했어요 — 주문 번호 ${no}`), el("div", { class: "sub small" }, `키오스크 메뉴판으로 다시 만든 주문 · ${via}`), el("ol", { class: "kiosk-lines" }, ...lines)];
-  if (warn.length) kids.push(el("div", { class: "price" }, "확인이 필요해요 — 직원 확인 뒤 결제합니다"), el("ul", { class: "kiosk-warn" }, ...warn.map((w) => el("li", {}, w))));
-  if (lines.length) kids.push(el("div", { class: "price" }, `합계 ${won(mine)} (키오스크 가격표로 계산)`));
-  if (lines.length && m.total != null && mine !== (Number(m.total) || 0)) kids.push(el("div", { class: "sub" }, `휴대폰이 보낸 합계(${won(Number(m.total) || 0)})와 달라요 — 키오스크 가격으로 결제합니다`));
-  kids.push(el("div", { class: "sub small" }, "결제는 이 키오스크에서(시연이라 실제 결제는 되지 않아요)"));
-  box.replaceChildren(...kids);
-  if (m.ref) channel().postMessage({ type: "issued", k: m.k, ref: m.ref, no }); // 한 기기 시연: 휴대폰에 발급 번호 알려 줌
+  const kids = [];
+  const tail = [];
+  if (lines.length) tail.push(el("div", { class: "price" }, `합계 ${won(mine)} (키오스크 가격표로 계산)`));
+  if (lines.length && m.total != null && mine !== (Number(m.total) || 0)) tail.push(el("div", { class: "sub" }, `휴대폰이 보낸 합계(${won(Number(m.total) || 0)})와 달라요 — 키오스크 가격으로 결제합니다`));
+  tail.push(el("div", { class: "sub small" }, "결제는 이 키오스크에서(시연이라 실제 결제는 되지 않아요)"));
+  // 번호 발급: 경고가 없을 때만 바로. 경고가 있으면 직원 확인 뒤, 받을 품목이 없으면 번호 없음(v0.7 — 4차 내부 점검 A·B·C·E)
+  const issue = () => {
+    const no = issueNo();
+    if (ref) rememberRef(ref, no);
+    if (m.ref) channel().postMessage({ type: "issued", k: m.k, ref: m.ref, no }); // 한 기기 시연: 휴대폰에 발급 번호 알려 줌
+    say(`내 방식 주문이 도착했어요. 주문 번호, ${spellNo(no)}`);
+    return no;
+  };
+  let no = null;
+  if (!lines.length) {
+    kids.push(el("b", {}, "받을 수 있는 품목이 없어요 — 주문 번호를 드리지 않았어요"), el("div", { class: "sub small" }, `${via}`));
+    kids.push(el("div", { class: "price" }, "직원 확인이 필요해요 — 직원에게 휴대폰 화면을 보여 주세요"), el("ul", { class: "kiosk-warn" }, ...warn.map((w) => el("li", {}, w))));
+    say("받을 수 있는 품목이 없어요. 직원에게 휴대폰 화면을 보여 주세요.");
+  } else if (warn.length) {
+    const head = el("b", {}, "내 방식 주문이 도착했어요 — 확인이 필요해요");
+    const btn = el("button", { type: "button", class: "block" }, "직원 확인 완료 — 주문 번호 받기");
+    btn.onclick = () => { const n2 = issue(); head.textContent = `내 방식 주문이 도착했어요 — 주문 번호 ${n2}`; btn.replaceWith(el("div", { class: "kiosk-no" }, n2)); };
+    kids.push(head, el("div", { class: "sub small" }, `키오스크 메뉴판으로 다시 만든 주문 · ${via}`), el("ol", { class: "kiosk-lines" }, ...lines),
+      el("div", { class: "price" }, "확인이 필요해요 — 직원 확인 뒤 결제합니다(번호는 확인 뒤에)"), el("ul", { class: "kiosk-warn" }, ...warn.map((w) => el("li", {}, w))), btn);
+    say("내 방식 주문이 도착했어요. 확인이 필요해서 직원이 확인한 뒤 주문 번호를 드려요.");
+  } else {
+    no = issue();
+    kids.push(el("b", {}, `내 방식 주문이 도착했어요 — 주문 번호 ${no}`), el("div", { class: "kiosk-no", "aria-hidden": "true" }, no),
+      el("div", { class: "sub small" }, `키오스크 메뉴판으로 다시 만든 주문 · ${via}`), el("ol", { class: "kiosk-lines" }, ...lines));
+  }
+  box.replaceChildren(...kids, ...tail);
+  if (atKiosk) box.focus({ preventScroll: false }); // v0.7(A): QR을 읽은 뒤 초점을 도착 상자로
   return no;
 }
 channel().addEventListener("message", (ev) => {
@@ -160,13 +207,13 @@ function fromQR(text, via) {
   if (d.store !== store.menu.store_id) pre.push(`다른 매장(${String(d.store).slice(0, 16)})의 주문이에요`);
   if (store.menu.menu_ver && d.ver !== store.menu.menu_ver) pre.push(`메뉴판 판번호가 달라요(QR ${String(d.ver).slice(0, 10)} · 키오스크 ${store.menu.menu_ver}) — 메뉴가 바뀌었을 수 있어요`);
   const items = d.items.map((x) => {
-    const it = byId[x.id];
+    const it = byId.get(x.id);
     const temps = it ? x.opts.filter((i) => isTemp(it.options[i])) : [];
     if (temps.length > 1) pre.push(`${it.name}: 온도가 두 개 들어 있어요`);
     return { id: x.id, temp: temps.length ? temps[0] : null, on: it ? x.opts.filter((i) => !isTemp(it.options[i])) : x.opts, qty: x.qty };
   });
   stopCam(); scanModal.classList.remove("open");
-  return receiveOrder({ type: "order", k: d.k || d.rawK, items }, via, pre);
+  return receiveOrder({ type: "order", k: d.k || d.rawK, ref: d.ref, items }, via, pre);
 }
 window.__readOrderQR = (text) => fromQR(text, "주문 QR(점검)"); // 점검 스크립트용
 const scanModal = document.getElementById("scanmodal");
@@ -191,11 +238,13 @@ document.getElementById("scan").onclick = async () => {
     timer = setInterval(() => { const t = decodeImage(v); if (t) fromQR(t, "주문 QR(카메라)"); }, 300);
   } catch (e) { scanMsg("이 기기에서는 카메라를 쓸 수 없어요 — 「사진으로 읽기」를 쓰거나 직원에게 휴대폰 화면을 보여 주세요"); }
 };
+document.getElementById("scanpick").onclick = () => document.getElementById("scanfile").click();
 document.getElementById("scanfile").onchange = async (e) => {
   const f = e.target.files && e.target.files[0]; if (!f) return;
   const img = new Image(); img.src = URL.createObjectURL(f); await img.decode().catch(() => null);
   const t = decodeImage(img);
   if (t) fromQR(t, "주문 QR(사진)"); else scanMsg("사진에서 QR을 찾지 못했어요 — 더 가까이, 밝게 찍어 주세요");
+  e.target.value = ""; // 같은 사진을 다시 골라도 읽히게
 };
 document.getElementById("scanclose").onclick = () => { stopCam(); scanModal.classList.remove("open"); document.getElementById("scan").focus(); };
 </script>

@@ -230,7 +230,7 @@ export function speak(text, slow = true) {
   } catch (e) { return false; }
 }
 
-// 같은 기기(같은 주소)의 다른 화면과 주문 알림 주고받기 — 한 기기 시연용. 두 기기 사이는 서버가 있어야 해서 시제품은 하지 않음
+// 같은 기기(같은 주소)의 다른 화면과 주문 알림 주고받기 — 한 기기 시연용. 두 기기 사이는 v0.6부터 주문 QR(js/orderqr.js)로 넘김(서버 없음) — 직원 호출·번호 되돌려 받기는 이 채널(한 기기 시연)에서만
 export function channel() {
   try { return new BroadcastChannel("mywayqr"); } catch (e) { return { postMessage() {}, addEventListener() {} }; }
 }
