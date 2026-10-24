@@ -183,9 +183,11 @@ function receiveOrder(m, via, pre = []) {
   } else if (warn.length) {
     const head = el("b", {}, "내 방식 주문이 도착했어요 — 확인이 필요해요");
     const btn = el("button", { type: "button", class: "block" }, "직원 확인 완료 — 주문 번호 받기");
-    btn.onclick = () => { const n2 = issue(); head.textContent = `내 방식 주문이 도착했어요 — 주문 번호 ${n2}`; btn.replaceWith(el("div", { class: "kiosk-no" }, n2)); box.focus({ preventScroll: false }); }; // v0.7.2(A): 단추가 사라진 뒤 초점이 body로 빠지지 않게
+    const wait = el("div", { class: "price" }, "확인이 필요해요 — 직원 확인 뒤 결제합니다(번호는 확인 뒤에)");
+    // v0.7.3(6차 내부 점검 A): 번호를 낸 뒤에도 「번호는 확인 뒤에」가 남지 않게 문구를 바꿈
+    btn.onclick = () => { const n2 = issue(); head.textContent = `내 방식 주문이 도착했어요 — 주문 번호 ${n2}`; wait.textContent = "직원 확인 완료 — 결제합니다"; btn.replaceWith(el("div", { class: "kiosk-no" }, n2)); box.focus({ preventScroll: false }); }; // v0.7.2(A): 단추가 사라진 뒤 초점이 body로 빠지지 않게
     kids.push(head, el("div", { class: "sub small" }, `키오스크 메뉴판으로 다시 만든 주문 · ${via}`), el("ol", { class: "kiosk-lines" }, ...lines),
-      el("div", { class: "price" }, "확인이 필요해요 — 직원 확인 뒤 결제합니다(번호는 확인 뒤에)"), el("ul", { class: "kiosk-warn" }, ...warn.map((w) => el("li", {}, w))), btn);
+      wait, el("ul", { class: "kiosk-warn" }, ...warn.map((w) => el("li", {}, w))), btn);
     say("내 방식 주문이 도착했어요. 확인이 필요해서 직원이 확인한 뒤 주문 번호를 드려요.");
   } else {
     no = issue();

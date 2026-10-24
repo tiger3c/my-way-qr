@@ -141,6 +141,8 @@ button, .btn { word-break: keep-all; overflow-wrap: anywhere; }
 .staffnote { word-break: keep-all; overflow-wrap: anywhere; }
 /* v0.7.2(5차 내부 점검 A: 320×568·큰 글씨에서 두 기기 직원 큰 글 알림이 화면보다 커 「알림 닫기」에 닿을 수 없음) — 알림 높이를 화면 안으로, 넘치면 알림 안에서 내림 */
 .staffnote { max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); overflow-y: auto; overscroll-behavior: contain; }
+/* v0.7.3(6차 내부 점검 A·B·D: 320×568 큰 글씨에서 알림 안을 내려야 「알림 닫기」가 보였음 — 터치 손님은 닫는 길을 못 봄) — 닫기 단추를 알림 아래쪽에 고정 */
+.staffnote > button { position: sticky; bottom: 0; background: var(--surface); }
 /* v0.7.2(A·B·E): 주문 QR 화면 3단계 안내가 낱말 중간에서 끊기지 않게 */
 ol.steps li { word-break: keep-all; overflow-wrap: anywhere; }
 .staffnote.big p:first-of-type { font-size: 1.1em; font-weight: 700; }
