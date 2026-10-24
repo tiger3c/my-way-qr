@@ -146,9 +146,9 @@ function item(v) {
     say(parts.join(". "));
   };
   // v0.7.2(5차 내부 점검 A·D·E: 쉬운 말+큰 글씨에서 설명은 단추 아래에 펼쳐져 있는데 「설명 접기」·「설명을 접었어요」가 함께 떠 상태와 반대로 읽힘)
-  //   → 쉬운 말 손님에게는 접기 단추 대신 「쉬운 말 설명은 아래에 있어요 ↓」(누르면 설명으로 이동), 안내도 「설명은 단추 아래에 두었어요」
+  //   → 쉬운 말 손님에게는 접기 단추 대신 「설명은 아래에 있어요 ↓」(누르면 설명으로 이동 — 큰 글씨에서도 한 줄), 안내도 「설명은 단추 아래에 두었어요」
   const descToggle = () => codes.has("EASY")
-    ? el("button", { type: "button", class: "block ghost", "data-k": "desc", onclick: () => { const c = document.getElementById("desccard"); if (c) { c.scrollIntoView({ block: "center" }); c.setAttribute("tabindex", "-1"); c.focus({ preventScroll: true }); } } }, "쉬운 말 설명은 아래에 있어요 ↓")
+    ? el("button", { type: "button", class: "block ghost", "data-k": "desc", onclick: () => { const c = document.getElementById("desccard"); if (c) { c.scrollIntoView({ block: "center" }); c.setAttribute("tabindex", "-1"); c.focus({ preventScroll: true }); } } }, "설명은 아래에 있어요 ↓")
     : el("button", { type: "button", class: "block ghost", "aria-expanded": showDesc ? "true" : "false", "data-k": "desc",
     onclick: () => { showDesc = !showDesc; keepFocusKey = "desc"; render(); } }, showDesc ? "설명 접기" : "설명 보기");
   const FOLD_MSG = codes.has("EASY") ? "화면에 다 들어가지 않아 설명은 단추 아래에 두었어요" : "화면에 다 들어가지 않아 설명을 접었어요";
