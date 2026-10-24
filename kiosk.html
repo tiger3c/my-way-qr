@@ -103,6 +103,9 @@ const byId = { get: (id) => byIdMap.get(String(id)) };
 const SEEN = "mywayqr.kseen";
 const seenRefs = () => { try { return JSON.parse(sessionStorage.getItem(SEEN) || "{}"); } catch (e) { return {}; } };
 const rememberRef = (ref, no) => { try { const m = seenRefs(); m[ref] = no; sessionStorage.setItem(SEEN, JSON.stringify(m)); } catch (e) { /* 무시 */ } };
+// v0.7.2(5차 내부 점검 B·D): 같은 주문인지 ref(4글자)만이 아니라 ref+체크섬으로 가림 — ref가 같고 내용이 다르면 앞 손님 번호를 주지 않고 직원 확인으로
+const refKey = (ref, sum) => (ref ? (sum ? `${ref}:${sum}` : ref) : "");
+const sameRefOther = (ref, key) => Object.keys(seenRefs()).some((x) => x !== key && x.split(":")[0] === ref);
 const kspeak = (t) => { document.getElementById("klive").textContent = t; speak(t, true); };
 const spellNo = (no) => String(no).replace(/-/g, "").split("").join(", "); // K-11 → "K, 1, 1"
 const extraOf = (o) => { const x = String(o).match(/\+([\d,]+)원/); return x ? Number(x[1].replace(/,/g, "")) : 0; };
@@ -118,8 +121,10 @@ function receiveOrder(m, via, pre = []) {
   const say = (t) => (atKiosk ? kspeak(t) : (document.getElementById("klive").textContent = t));
   const ref = /^[0-9a-z]{1,8}$/i.test(String(m.ref || "")) ? String(m.ref) : "";
   const damaged = pre.some((x) => x.includes("손상"));
-  if (ref && !damaged && seenRefs()[ref]) {
-    const prev = seenRefs()[ref];
+  const sum = /^[0-9a-f]{4}$/i.test(String(m.sum || "")) ? String(m.sum) : (/^MWQ1\|/.test(String(m.mwq || "")) ? String(m.mwq).split("|").pop() : "");
+  const key = refKey(ref, sum);
+  if (ref && !damaged && seenRefs()[key]) {
+    const prev = seenRefs()[key];
     box.replaceChildren(el("b", {}, `이미 받은 주문이에요 — 주문 번호 ${prev}`), el("div", { class: "sub" }, `같은 주문 QR을 다시 읽었어요. 새 주문으로 받지 않았어요(${via}).`));
     say(`이미 받은 주문이에요. 주문 번호, ${spellNo(prev)}`);
     if (atKiosk) box.focus({ preventScroll: false });
@@ -127,6 +132,8 @@ function receiveOrder(m, via, pre = []) {
     return prev;
   }
   const warn = [...pre];
+  if (ref && !damaged && sameRefOther(ref, key)) warn.push("앞서 받은 주문과 주문 표시가 같은데 내용이 달라요 — 직원 확인"); // v0.7.2(B)
+  if (!ref && atKiosk) warn.push("주문 표시가 없는 옛 형식 주문 QR이에요 — 같은 주문이 두 번 들어가지 않게 직원 확인"); // v0.7.2(B·D): 6칸 QR은 중복을 가릴 수 없음
   if (String(m.k || "") !== k) warn.push(m.k ? `다른 키오스크 번호(${String(m.k).replace(/\D/g, "").slice(0, 4)})로 보낸 주문이에요 — 이 키오스크(${k}) 주문이 아니에요` : "키오스크 번호가 없는 주문이에요");
   const lines = [];
   let mine = 0;
@@ -163,7 +170,7 @@ function receiveOrder(m, via, pre = []) {
   // 번호 발급: 경고가 없을 때만 바로. 경고가 있으면 직원 확인 뒤, 받을 품목이 없으면 번호 없음(v0.7 — 4차 내부 점검 A·B·C·E)
   const issue = () => {
     const no = issueNo();
-    if (ref) rememberRef(ref, no);
+    if (ref) rememberRef(key, no);
     if (m.ref) channel().postMessage({ type: "issued", k: m.k, ref: m.ref, no }); // 한 기기 시연: 휴대폰에 발급 번호 알려 줌
     say(`내 방식 주문이 도착했어요. 주문 번호, ${spellNo(no)}`);
     return no;
@@ -176,7 +183,7 @@ function receiveOrder(m, via, pre = []) {
   } else if (warn.length) {
     const head = el("b", {}, "내 방식 주문이 도착했어요 — 확인이 필요해요");
     const btn = el("button", { type: "button", class: "block" }, "직원 확인 완료 — 주문 번호 받기");
-    btn.onclick = () => { const n2 = issue(); head.textContent = `내 방식 주문이 도착했어요 — 주문 번호 ${n2}`; btn.replaceWith(el("div", { class: "kiosk-no" }, n2)); };
+    btn.onclick = () => { const n2 = issue(); head.textContent = `내 방식 주문이 도착했어요 — 주문 번호 ${n2}`; btn.replaceWith(el("div", { class: "kiosk-no" }, n2)); box.focus({ preventScroll: false }); }; // v0.7.2(A): 단추가 사라진 뒤 초점이 body로 빠지지 않게
     kids.push(head, el("div", { class: "sub small" }, `키오스크 메뉴판으로 다시 만든 주문 · ${via}`), el("ol", { class: "kiosk-lines" }, ...lines),
       el("div", { class: "price" }, "확인이 필요해요 — 직원 확인 뒤 결제합니다(번호는 확인 뒤에)"), el("ul", { class: "kiosk-warn" }, ...warn.map((w) => el("li", {}, w))), btn);
     say("내 방식 주문이 도착했어요. 확인이 필요해서 직원이 확인한 뒤 주문 번호를 드려요.");
@@ -213,7 +220,7 @@ function fromQR(text, via) {
     return { id: x.id, temp: temps.length ? temps[0] : null, on: it ? x.opts.filter((i) => !isTemp(it.options[i])) : x.opts, qty: x.qty };
   });
   stopCam(); scanModal.classList.remove("open");
-  return receiveOrder({ type: "order", k: d.k || d.rawK, ref: d.ref, items }, via, pre);
+  return receiveOrder({ type: "order", k: d.k || d.rawK, ref: d.ref, sum: String(text || "").trim().split("|").pop(), items }, via, pre);
 }
 window.__readOrderQR = (text) => fromQR(text, "주문 QR(점검)"); // 점검 스크립트용
 const scanModal = document.getElementById("scanmodal");

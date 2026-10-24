@@ -145,8 +145,13 @@ function item(v) {
     if (reads("알레르기")) parts.push(allergyLine(v));
     say(parts.join(". "));
   };
-  const descToggle = () => el("button", { type: "button", class: "block ghost", "aria-expanded": showDesc ? "true" : "false", "data-k": "desc",
+  // v0.7.2(5차 내부 점검 A·D·E: 쉬운 말+큰 글씨에서 설명은 단추 아래에 펼쳐져 있는데 「설명 접기」·「설명을 접었어요」가 함께 떠 상태와 반대로 읽힘)
+  //   → 쉬운 말 손님에게는 접기 단추 대신 「쉬운 말 설명은 아래에 있어요 ↓」(누르면 설명으로 이동), 안내도 「설명은 단추 아래에 두었어요」
+  const descToggle = () => codes.has("EASY")
+    ? el("button", { type: "button", class: "block ghost", "data-k": "desc", onclick: () => { const c = document.getElementById("desccard"); if (c) { c.scrollIntoView({ block: "center" }); c.setAttribute("tabindex", "-1"); c.focus({ preventScroll: true }); } } }, "쉬운 말 설명은 아래에 있어요 ↓")
+    : el("button", { type: "button", class: "block ghost", "aria-expanded": showDesc ? "true" : "false", "data-k": "desc",
     onclick: () => { showDesc = !showDesc; keepFocusKey = "desc"; render(); } }, showDesc ? "설명 접기" : "설명 보기");
+  const FOLD_MSG = codes.has("EASY") ? "화면에 다 들어가지 않아 설명은 단추 아래에 두었어요" : "화면에 다 들어가지 않아 설명을 접었어요";
   // 단추 아래끝이 '직원 부르기' 줄 위(이 기기의 실제 화면 높이)를 넘는지
   const overLimit = (b) => { const bar = document.getElementById("bar"); return b.getBoundingClientRect().bottom > window.innerHeight - (bar ? bar.getBoundingClientRect().height : 0); };
   function render() {
@@ -161,8 +166,10 @@ function item(v) {
           el("button", { type: "button", class: "block ghost", onclick: () => list(v.category) }, "← 다른 메뉴"));
         if (!again) {
           // v0.6 실행 중 보정 — 확인 단추가 아래 단추 줄에 가리거나 화면 밖이면 설명을 접음
-          if (!fold && overLimit(okBtn)) { fold = true; guard = guard || "화면에 다 들어가지 않아 설명을 접었어요"; return render(); }
+          if (!fold && overLimit(okBtn)) { fold = true; guard = guard || FOLD_MSG; return render(); }
           if (fold && !compact && overLimit(okBtn)) { compact = true; return render(); }
+          // v0.7.2(10-24 실측: 디카페인 아메리카노 × 큰 글씨+읽어 주기 16조합에서 확인 단추 아래 24~36px가 단추 줄에 걸림) — 제목까지 줄여도 넘치면 확인 단추가 단추 줄 위에 다 보이게 쪽을 내림(제목 위쪽만 가려짐)
+          if (fold && compact && overLimit(okBtn)) { const bar = document.getElementById("bar"); window.scrollBy(0, Math.ceil(okBtn.getBoundingClientRect().bottom - (window.innerHeight - (bar ? bar.getBoundingClientRect().height : 0)) + 8)); }
           sayItem();
         }
         return;
@@ -184,7 +191,7 @@ function item(v) {
       // v0.6 실행 중 보정 — 이 기기 화면에서 '담기'가 아래 단추 줄에 가리거나 화면 밖이면(구성안 검증은 어림이라) 설명을 접고, 그래도 넘치면 하나씩 묻기
       const b = app.querySelector('[data-act="add"]');
       if (b && overLimit(b)) {
-        if (!fold) { fold = true; guard = "화면에 다 들어가지 않아 설명을 접었어요"; return render(); }
+        if (!fold) { fold = true; guard = FOLD_MSG; return render(); }
         // v0.7(4차 내부 점검 A·B·E): 하나씩으로 바꾸면 설명 접기를 구성안대로 되돌리고 다시 잼(자리가 남으면 펼친 채) · 안내는 실제 이유대로
         onePerScreen = true; si = -1; fold = P.plan.detail === "접기"; guard = "화면에 다 들어가지 않아 하나씩 물어볼게요"; return render();
       }
